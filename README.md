@@ -176,3 +176,4 @@ Las páginas y los Server Actions ya consumen esa interfaz, no el JSON.
 - **Tailwind v4:** el tema se define en CSS (`@theme`) dentro de `globals.css`; no hay
   `tailwind.config.ts`. La app es **solo tema claro**.
 - **`next/image`:** se usó `<img>` con fallback a un jersey SVG para tolerar imágenes faltantes.
+- 
