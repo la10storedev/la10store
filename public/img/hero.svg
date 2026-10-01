@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" role="presentation">
+  <defs>
+    <linearGradient id="hero-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#09090b" />
+      <stop offset="60%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#27272a" />
+    </linearGradient>
+    <linearGradient id="hero-jersey" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fafafa" />
+      <stop offset="55%" stop-color="#e4e4e7" />
+      <stop offset="100%" stop-color="#a1a1aa" />
+    </linearGradient>
+    <radialGradient id="hero-glow" cx="0.7" cy="0.35" r="0.6">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.14" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="hero-jersey-clip">
+      <path d="M748 168 L648 208 L540 320 L636 410 L690 358 L690 706 Q820 762 950 706 L950 358 L1004 410 L1100 320 L992 208 L892 168 Q820 252 748 168 Z" />
+    </clipPath>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#hero-bg)" />
+  <rect width="1200" height="800" fill="url(#hero-glow)" />
+
+  <!-- Rayas diagonales sutiles -->
+  <g opacity="0.06" stroke="#ffffff" stroke-width="2">
+    <path d="M-100 700 L500 -50" />
+    <path d="M20 760 L620 10" />
+    <path d="M140 820 L740 70" />
+    <path d="M900 820 L1300 420" />
+  </g>
+
+  <!-- Camiseta grande -->
+  <g clip-path="url(#hero-jersey-clip)">
+    <rect x="540" y="140" width="580" height="660" fill="url(#hero-jersey)" />
+    <rect x="540" y="360" width="580" height="70" fill="#18181b" opacity="0.9" />
+    <rect x="540" y="560" width="580" height="24" fill="#18181b" opacity="0.5" />
+  </g>
+  <path
+    d="M748 168 L648 208 L540 320 L636 410 L690 358 L690 706 Q820 762 950 706 L950 358 L1004 410 L1100 320 L992 208 L892 168 Q820 252 748 168 Z"
+    fill="none"
+    stroke="#ffffff"
+    stroke-opacity="0.25"
+    stroke-width="4"
+  />
+  <path d="M772 178 L820 258 L868 178" fill="none" stroke="#ffffff" stroke-opacity="0.4" stroke-width="10" stroke-linecap="round" />
+  <text x="820" y="580" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="150" font-weight="800" fill="#18181b" opacity="0.85">10</text>
+</svg>

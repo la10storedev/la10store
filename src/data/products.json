@@ -1,0 +1,390 @@
+{
+  "products": [
+    {
+      "name": "Argentina conmemoración",
+      "team": "Argentina",
+      "category": "seleccion",
+      "league": "Mundial FIFA",
+      "season": "2026",
+      "description": "Camiseta nueva",
+      "price": 50000,
+      "images": [
+        "/img/1790460866967-argentina-titular-2026-heatrdy-de-juego-3-estrellas-campeon-qatar-2022-7-e939301",
+        "/img/1790460866947-argentina-titular-2026-heatrdy-de-juego-3-estrellas-campeon-qatar-2022-14-7101b4",
+        "/img/1790460866951-argentina-titular-2026-heatrdy-de-juego-3-estrellas-campeon-qatar-2022-24-cc8ba1",
+        "/img/1790460866949-argentina-titular-2026-heatrdy-de-juego-3-estrellas-campeon-qatar-2022-32-02b980"
+      ],
+      "sizes": [
+        {
+          "size": "S",
+          "stock": 2
+        },
+        {
+          "size": "M",
+          "stock": 1
+        },
+        {
+          "size": "L",
+          "stock": 5
+        },
+        {
+          "size": "XL",
+          "stock": 0
+        }
+      ],
+      "colors": {
+        "primary": "#16a34a",
+        "secondary": "#ffffff"
+      },
+      "featured": false,
+      "visible": false,
+      "id": "argentina-2026-12p6",
+      "createdAt": "2026-09-26T22:14:36.686Z"
+    },
+    {
+      "id": "arg-2022-campeon",
+      "name": "Argentina 2022 · Campeón del Mundo",
+      "team": "Argentina",
+      "category": "seleccion",
+      "league": "Mundial FIFA",
+      "season": "2022",
+      "description": "La camiseta que quedo en la memoria de todos. Reproduccion fiel de la edicion Qatar 2022, con la copa en el centro del pecho y las tres estrellas doradas de la victoria. Tela dry-fit, costuras reforzadas y escudo bordado.",
+      "price": 89000,
+      "images": [
+        "/img/argentina2022.jpg"
+      ],
+      "sizes": [
+        {
+          "size": "S",
+          "stock": 0
+        },
+        {
+          "size": "M",
+          "stock": 0
+        },
+        {
+          "size": "L",
+          "stock": 0
+        },
+        {
+          "size": "XL",
+          "stock": 0
+        },
+        {
+          "size": "XXL",
+          "stock": 0
+        }
+      ],
+      "colors": {
+        "primary": "#16a34a",
+        "secondary": "#ffffff"
+      },
+      "featured": true,
+      "visible": true,
+      "createdAt": "2025-11-20T12:00:00.000Z"
+    },
+    {
+      "id": "bra-2024-seleccion",
+      "name": "Brasil 2024 · Selección",
+      "team": "Brasil",
+      "category": "seleccion",
+      "league": "Mundial FIFA",
+      "season": "2024",
+      "description": "Amarillo con hombros verdes y detalles dorados. Camiseta de la cantera con el escudo de la CBF bordado y el verde caracteristico de la camiseta oficial del equipo.",
+      "price": 74900,
+      "images": [
+        "/img/brasil2024.jpg"
+      ],
+      "sizes": [
+        {
+          "size": "S",
+          "stock": 6
+        },
+        {
+          "size": "M",
+          "stock": 9
+        },
+        {
+          "size": "L",
+          "stock": 8
+        },
+        {
+          "size": "XL",
+          "stock": 5
+        },
+        {
+          "size": "XXL",
+          "stock": 2
+        }
+      ],
+      "colors": {
+        "primary": "#00A650",
+        "secondary": "#FEDF00"
+      },
+      "featured": true,
+      "visible": true,
+      "createdAt": "2025-12-02T12:00:00.000Z"
+    },
+    {
+      "id": "esp-2024-seleccion",
+      "name": "España 2024 · Selección",
+      "team": "España",
+      "category": "seleccion",
+      "league": "Eurocopa",
+      "season": "2024",
+      "description": "Rojo intenso y amarillo dorado, el combo que identifica a la seleccion parar la final de la Euro 2024. Escudo bordado, tejido transpirable y costuras planas para maxima comodidad.",
+      "price": 69900,
+      "images": [
+        "/img/espana2024.jpg"
+      ],
+      "sizes": [
+        {
+          "size": "S",
+          "stock": 5
+        },
+        {
+          "size": "M",
+          "stock": 4
+        },
+        {
+          "size": "L",
+          "stock": 2
+        },
+        {
+          "size": "XL",
+          "stock": 0
+        }
+      ],
+      "colors": {
+        "primary": "#C60B1E",
+        "secondary": "#FFC400"
+      },
+      "featured": false,
+      "visible": true,
+      "createdAt": "2025-12-10T12:00:00.000Z"
+    },
+    {
+      "id": "boca-2024-local",
+      "name": "Boca Juniors 2024 · Local",
+      "team": "Boca Juniors",
+      "category": "club",
+      "league": "Liga Profesional",
+      "season": "2024",
+      "description": "La azul con amarillo que no falla. Version local de la temporada 2024 con la franja central, escudo bordado en el pecho y los sponsors de la camiseta oficial.",
+      "price": 64900,
+      "images": [
+        "/img/boca2024.jpg"
+      ],
+      "sizes": [
+        {
+          "size": "S",
+          "stock": 8
+        },
+        {
+          "size": "M",
+          "stock": 10
+        },
+        {
+          "size": "L",
+          "stock": 12
+        },
+        {
+          "size": "XL",
+          "stock": 7
+        },
+        {
+          "size": "XXL",
+          "stock": 4
+        }
+      ],
+      "colors": {
+        "primary": "#0A3E8C",
+        "secondary": "#FFD100"
+      },
+      "featured": true,
+      "visible": true,
+      "createdAt": "2025-11-05T12:00:00.000Z"
+    },
+    {
+      "id": "river-2024-local",
+      "name": "River Plate 2024 · Local",
+      "team": "River Plate",
+      "category": "club",
+      "league": "Liga Profesional",
+      "season": "2024",
+      "description": "El blanco con banda roja obligatorio. Camiseta local 2024 con la franja diagonal bordada, escudo en el pecho y detalles reflectantes en la espalda.",
+      "price": 64900,
+      "images": [
+        "/img/river2024.jpg"
+      ],
+      "sizes": [
+        {
+          "size": "S",
+          "stock": 3
+        },
+        {
+          "size": "M",
+          "stock": 6
+        },
+        {
+          "size": "L",
+          "stock": 0
+        },
+        {
+          "size": "XL",
+          "stock": 0
+        }
+      ],
+      "colors": {
+        "primary": "#E4002B",
+        "secondary": "#FFFFFF"
+      },
+      "featured": false,
+      "visible": true,
+      "createdAt": "2025-11-12T12:00:00.000Z"
+    },
+    {
+      "id": "real-madrid-2024-local",
+      "name": "Real Madrid 2024 · Local",
+      "team": "Real Madrid",
+      "category": "club",
+      "league": "La Liga",
+      "season": "2024",
+      "description": "Blanco con costuras doradas al estilo de las legends. Escudo bordado, tejido dry y cuello redondeado comodo. Tela de 145 g/m2.",
+      "price": 79900,
+      "images": [
+        "/img/realmadrid2024.jpg"
+      ],
+      "sizes": [
+        {
+          "size": "S",
+          "stock": 2
+        },
+        {
+          "size": "M",
+          "stock": 5
+        },
+        {
+          "size": "L",
+          "stock": 6
+        },
+        {
+          "size": "XL",
+          "stock": 4
+        },
+        {
+          "size": "XXL",
+          "stock": 1
+        }
+      ],
+      "colors": {
+        "primary": "#F4F4F5",
+        "secondary": "#00529F"
+      },
+      "featured": true,
+      "visible": true,
+      "createdAt": "2025-12-01T12:00:00.000Z"
+    },
+    {
+      "id": "barcelona-2024-local",
+      "name": "FC Barcelona 2024 · Local",
+      "team": "FC Barcelona",
+      "category": "club",
+      "league": "La Liga",
+      "season": "2024",
+      "description": "Franjas granates y azuladas para la temporada 2024/25. Camiseta oficial con el nuevo escudo, los logos de los sponsors y detalles en los hombros que hacen unico este uniforme.",
+      "price": 79900,
+      "images": [
+        "/img/barcelona2024.jpg"
+      ],
+      "sizes": [
+        {
+          "size": "S",
+          "stock": 7
+        },
+        {
+          "size": "M",
+          "stock": 0
+        },
+        {
+          "size": "L",
+          "stock": 3
+        },
+        {
+          "size": "XL",
+          "stock": 5
+        },
+        {
+          "size": "XXL",
+          "stock": 2
+        }
+      ],
+      "colors": {
+        "primary": "#A50044",
+        "secondary": "#004D98"
+      },
+      "featured": false,
+      "visible": true,
+      "createdAt": "2025-12-05T12:00:00.000Z"
+    },
+    {
+      "id": "man-city-2024-local",
+      "name": "Manchester City 2024 · Local",
+      "team": "Manchester City",
+      "category": "club",
+      "league": "Premier League",
+      "season": "2024",
+      "description": "Celeste con detalles blancos y el rombo del sponsor en el pecho. Version local 2024/25 con escudo bordado, tejido de secado rapido y costuras term selladas.",
+      "price": 74900,
+      "images": [
+        "/img/mancity2024.jpg"
+      ],
+      "sizes": [
+        {
+          "size": "S",
+          "stock": 4
+        },
+        {
+          "size": "M",
+          "stock": 8
+        },
+        {
+          "size": "L",
+          "stock": 9
+        },
+        {
+          "size": "XL",
+          "stock": 6
+        },
+        {
+          "size": "XXL",
+          "stock": 3
+        }
+      ],
+      "colors": {
+        "primary": "#6CABDD",
+        "secondary": "#1C2C5B"
+      },
+      "featured": false,
+      "visible": true,
+      "createdAt": "2025-12-08T12:00:00.000Z"
+    }
+  ],
+  "teams": [
+    "Argentina",
+    "Boca Juniors",
+    "Brasil",
+    "España",
+    "FC Barcelona",
+    "Manchester City",
+    "Real Madrid",
+    "River Plate"
+  ],
+  "leagues": [
+    "Eurocopa",
+    "La Liga",
+    "Liga Profesional",
+    "Mundial FIFA",
+    "Premier League"
+  ]
+}

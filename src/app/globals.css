@@ -1,26 +1,116 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+  Tema de la app (Tailwind CSS v4, configuracion desde CSS).
+  Tailwind v4 no usa tailwind.config.ts: los tokens se declaran en `@theme`
+  y generan utilities automaticamente (bg-brand-600, text-brand-700, etc.).
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  ------------------------------------------------------------------
+  Paleta de la marca: naranja #f66d1e (el color principal del logo).
+  ------------------------------------------------------------------
+*/
+@theme {
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-200: #fed7aa;
+  --color-brand-300: #fdba74;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #f66d1e;
+  --color-brand-600: #ea580c;
+  --color-brand-700: #c2410c;
+  --color-brand-800: #9a3412;
+  --color-brand-900: #7c2d12;
+  --color-brand-950: #431407;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Slide-in de los toasts desde el borde derecho. */
+  --animate-toast-in: toast-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Fade-in del overlay del modal de confirmacion. */
+  --animate-overlay-in: overlay-in 0.2s ease-out;
+
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Fade-in + scale-in del modal de confirmacion. */
+  --animate-confirm-in: confirm-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes confirm-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 }
 
+/*
+  La app es de tema claro unicamente: se declara `color-scheme: light` para
+  que los controles nativos del navegador (selectores, scrollbars) no queden
+  oscuros en un sistema con tema oscuro.
+*/
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Compensa el header sticky al saltar a un ancla (#equipos, #envio-pagos). */
+  scroll-padding-top: 4.5rem;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #ffffff;
+  color: var(--color-zinc-950);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Seleccion de texto con el naranja de la marca. */
+::selection {
+  background-color: #f66d1e;
+  color: #ffffff;
+}
+
+/* Titulos: tracking mas ajustado para el look editorial tipo ecommerce. */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+}
+
+/* Respeta la preferencia de menos animacion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
