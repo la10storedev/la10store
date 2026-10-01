@@ -5,8 +5,8 @@ import { CreditCard, MessageCircle, Truck } from 'lucide-react'
 import { Hero } from '@/components/shop/Hero'
 import { ProductFilters } from '@/components/products/ProductFilters'
 import { ProductGrid } from '@/components/products/ProductGrid'
-import { filterProducts, getFacets, parseFilters, sortProducts } from '@/lib/products'
-import { getAllProducts, getSiteSettings } from '@/lib/products-store'
+import { filterProducts, getFacets, mergeAssociations, parseFilters, sortProducts } from '@/lib/products'
+import { getAllProducts, getSiteSettings, getTeamLeagueAssociations } from '@/lib/products-store'
 import { siteConfig } from '@/lib/site'
 
 /**
@@ -33,19 +33,28 @@ type CatalogPageProps = {
 }
 
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
-  const [products, query, heroSettings] = await Promise.all([
+  const [products, query, heroSettings, associationsByCategory] = await Promise.all([
     getAllProducts(),
     searchParams,
     getSiteSettings(),
+    getTeamLeagueAssociations(),
   ])
 
   const filters = parseFilters(query)
-  const facets = getFacets(products)
+  // El filtro es global: une las asociaciones de seleccion y club en un solo
+  // mapa (los nombres de liga son unicos por categoria; el merge concatena sin
+  // duplicar y ordena). `getTeamLeagueAssociations` degrada a vacio si la tabla
+  // `team_leagues` no existe todavia, asi el catalogo no se rompe.
+  const associations = mergeAssociations(
+    associationsByCategory.seleccion,
+    associationsByCategory.club,
+  )
+  const facets = getFacets(products, associations)
   const visible = sortProducts(filterProducts(products, filters), filters.sort)
 
   return (
     <>
-      {/* Hero: dinamico, editable desde /admin/apariencia */}
+      {/* Hero con filtros integrados */}
       <Hero
         image={heroSettings.hero_image || undefined}
         title={heroSettings.hero_title}
@@ -53,16 +62,16 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
         tagline={heroSettings.hero_tagline}
         ctaText={heroSettings.hero_cta_text}
         ctaLink={heroSettings.hero_cta_link}
-      />
-
-      {/* ---------------------------------------------------------------- */}
-      {/* Filtros + grilla                                                */}
-      {/* ---------------------------------------------------------------- */}
-      <section id="catalogo" className="scroll-mt-20">
+      >
         <Suspense fallback={<FiltersSkeleton />}>
           <ProductFilters facets={facets} filters={filters} />
         </Suspense>
+      </Hero>
 
+      {/* ---------------------------------------------------------------- */}
+      {/* Grilla de productos                                              */}
+      {/* ---------------------------------------------------------------- */}
+      <section id="catalogo" className="scroll-mt-20">
         <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-6 lg:px-10">
           <div className="mb-6 flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-950">

@@ -1,4 +1,4 @@
-import { getTaxonomyByCategory } from '@/lib/products'
+import { addTaxonomyValue, getTaxonomyByCategory } from '@/lib/products'
 import { siteConfig } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type {
@@ -8,7 +8,11 @@ import type {
   ProductDraft,
   ProductSize,
   Taxonomy,
+  TeamLeagueMap,
 } from '@/types/product'
+
+/** Cliente admin tipado tal como lo construye `createAdminClient()`. */
+type AdminClient = ReturnType<typeof createAdminClient>
 
 /**
  * CAPA DE ACCESO A DATOS (DAL) — SOLO SERVIDOR.
@@ -125,10 +129,11 @@ function fail(context: string, error: unknown): never {
 /**
  * Lista de productos del catalogo.
  *
- * Por defecto devuelve SOLO los visibles (para el publico) y EXCLUYE los
- * eliminados (soft delete). El panel de admin pasa `{ includeHidden: true }`
- * para ver tambien los ocultos; `{ includeDeleted: true }` incluye ademas los
- * eliminados (no lo usa el panel de inventario, solo por si hace falta).
+ * Por defecto devuelve SOLO los activos (`active = true`, la fuente de verdad
+ * de existencia) y SOLO los visibles (para el publico). El panel de admin pasa
+ * `{ includeHidden: true }` para ver tambien los ocultos; `{ includeDeleted:
+ * true }` incluye ademas los eliminados (no lo usa el panel de inventario,
+ * solo por si hace falta).
  */
 export async function getAllProducts(options?: {
   includeHidden?: boolean
@@ -143,7 +148,7 @@ export async function getAllProducts(options?: {
     .order('created_at', { ascending: false })
 
   if (!includeHidden) query = query.eq('visible', true)
-  if (!includeDeleted) query = query.is('deleted_at', null)
+  if (!includeDeleted) query = query.eq('active', true)
 
   const { data, error } = await query
   if (error) {
@@ -162,7 +167,7 @@ export async function getProductById(
 
   let query = admin.from('products').select(PRODUCT_SELECT).eq('id', id)
   if (!includeHidden) query = query.eq('visible', true)
-  if (!includeDeleted) query = query.is('deleted_at', null)
+  if (!includeDeleted) query = query.eq('active', true)
 
   const { data, error } = await query.maybeSingle()
   if (error) {
@@ -175,18 +180,232 @@ export async function getProductById(
 /**
  * Equipos y ligas para los desplegables del panel, separados por categoria.
  *
- * Se deriva de todos los productos (incluye ocultos) con la misma funcion pura
- * que antes: la tabla `teams` no guarda categoria, asi que es la unica forma de
- * agrupar equipos por categoria fiel al comportamiento original.
+ * Cada lista es la UNION sin duplicados de dos fuentes:
+ * 1. Las filas de las tablas `teams`/`leagues` con `active = true` y
+ *    `deleted_at IS NULL`, agrupadas por la columna `category`.
+ * 2. Los valores derivados de los productos (incluye ocultos) con
+ *    `getTaxonomyByCategory`, para que nunca falte un equipo/liga aunque la
+ *    fila maestra todavía no exista.
+ *
+ * El resultado queda ordenado alfabeticamente en español. Si la query a la
+ * tabla falla (columnas `category`/`deleted_at` ausentes, migración pendiente),
+ * usa `[]` para esa fuente y sigue: la taxonomia derivada de productos evita el
+ * crash. Incluye las asociaciones equipo↔ligas de `team_leagues`, por categoria.
  */
 export async function getTaxonomy(): Promise<Taxonomy> {
-  const products = await getAllProducts({ includeHidden: true })
-  return getTaxonomyByCategory(products)
+  const admin = createAdminClient()
+
+  const [products, associations, teamsRes, leaguesRes] = await Promise.all([
+    getAllProducts({ includeHidden: true }),
+    getTeamLeagueAssociations(),
+    admin
+      .from('teams')
+      .select('id, name, category')
+      .eq('active', true)
+      .is('deleted_at', null),
+    admin
+      .from('leagues')
+      .select('id, name, category')
+      .eq('active', true)
+      .is('deleted_at', null),
+  ])
+
+  const taxonomy = getTaxonomyByCategory(products)
+
+  // Equipos de la tabla `teams` por categoria (fallback a [] si la migración
+  // de `category`/`deleted_at` todavía no se aplicó).
+  const teamsFromTable: Record<ProductCategory, string[]> = { seleccion: [], club: [] }
+  if (teamsRes.error) {
+    console.warn(
+      '[products-store] getTaxonomy(): no se pudo leer teams (¿migración pendiente?), usando solo los derivados de productos',
+    )
+  } else {
+    for (const row of teamsRes.data ?? []) {
+      if (row && typeof row.name === 'string') {
+        const category: ProductCategory = row.category === 'seleccion' ? 'seleccion' : 'club'
+        teamsFromTable[category] = addTaxonomyValue(teamsFromTable[category], row.name)
+      }
+    }
+  }
+
+  // Ligas de la tabla `leagues` por categoria (idem).
+  const leaguesFromTable: Record<ProductCategory, string[]> = { seleccion: [], club: [] }
+  if (leaguesRes.error) {
+    console.warn(
+      '[products-store] getTaxonomy(): no se pudo leer leagues (¿migración pendiente?), usando solo los derivados de productos',
+    )
+  } else {
+    for (const row of leaguesRes.data ?? []) {
+      if (row && typeof row.name === 'string') {
+        const category: ProductCategory = row.category === 'seleccion' ? 'seleccion' : 'club'
+        leaguesFromTable[category] = addTaxonomyValue(leaguesFromTable[category], row.name)
+      }
+    }
+  }
+
+  // Union sin duplicados y orden alfabetico (es) de ambas fuentes.
+  const merge = (derived: string[], fromTable: string[]): string[] =>
+    fromTable.reduce((acc, value) => addTaxonomyValue(acc, value), [...derived])
+
+  return {
+    seleccion: {
+      teams: merge(taxonomy.seleccion.teams, teamsFromTable.seleccion),
+      leagues: merge(taxonomy.seleccion.leagues, leaguesFromTable.seleccion),
+      associations: associations.seleccion,
+    },
+    club: {
+      teams: merge(taxonomy.club.teams, teamsFromTable.club),
+      leagues: merge(taxonomy.club.leagues, leaguesFromTable.club),
+      associations: associations.club,
+    },
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Asociaciones equipo <-> ligas (tabla `team_leagues`, N:M)
+// ---------------------------------------------------------------------------
+
+/** Asociaciones vacias por categoria (fallback cuando la tabla no existe). */
+function emptyTeamLeagueAssociations(): Record<ProductCategory, TeamLeagueMap> {
+  return {
+    seleccion: { teamLeagues: {}, leagueTeams: {} },
+    club: { teamLeagues: {}, leagueTeams: {} },
+  }
+}
+
+/**
+ * Asociaciones equipo↔ligas de la tabla `team_leagues`, agrupadas POR CATEGORIA
+ * de liga y con claves por NOMBRE (no por id).
+ *
+ * Trae `teams(id, name)`, `leagues(id, name, category)` y `team_leagues` y las
+ * une en memoria: son tres lecturas baratas y evita dependencias de la sintaxis
+ * de joins de postgrest. Las listas salen ordenadas alfabeticamente en español.
+ *
+ * Solo considera registros activos (`active = true`): equipos, ligas o
+ * asociaciones desactivadas no aparecen en la taxonomia ni en los filtros.
+ *
+ * Degrada GRACIOSAMENTE: si la tabla `team_leagues` no existe todavia (migracion
+ * pendiente), devuelve mapas vacios y loguea un warning. El catalogo no se
+ * rompe antes de correr la migracion.
+ */
+export async function getTeamLeagueAssociations(): Promise<
+  Record<ProductCategory, TeamLeagueMap>
+> {
+  const admin = createAdminClient()
+
+  const [teamsRes, leaguesRes, relationsRes] = await Promise.all([
+    admin.from('teams').select('id, name').eq('active', true),
+    admin.from('leagues').select('id, name, category').eq('active', true),
+    admin.from('team_leagues').select('team_id, league_id').eq('active', true),
+  ])
+
+  if (teamsRes.error || leaguesRes.error || relationsRes.error) {
+    console.warn(
+      '[products-store] getTeamLeagueAssociations(): no se pudieron leer las asociaciones (tabla team_leagues quizas no existe aun), usando vacio',
+    )
+    return emptyTeamLeagueAssociations()
+  }
+
+  const teamNameById = new Map<string, string>()
+  for (const row of teamsRes.data ?? []) {
+    if (row && typeof row.id === 'string' && typeof row.name === 'string') {
+      teamNameById.set(row.id, row.name)
+    }
+  }
+
+  // id de liga -> { name, category }. Solo ligas con categoria valida.
+  const leagueById = new Map<string, { name: string; category: ProductCategory }>()
+  for (const row of leaguesRes.data ?? []) {
+    if (row && typeof row.id === 'string' && typeof row.name === 'string') {
+      const category: ProductCategory = row.category === 'seleccion' ? 'seleccion' : 'club'
+      leagueById.set(row.id, { name: row.name, category })
+    }
+  }
+
+  // Acumuladores por categoria, sin duplicar (Set) y sin ordenar todavia.
+  const teamLeagues: Record<ProductCategory, Record<string, Set<string>>> = {
+    seleccion: {},
+    club: {},
+  }
+  const leagueTeams: Record<ProductCategory, Record<string, Set<string>>> = {
+    seleccion: {},
+    club: {},
+  }
+
+  for (const relation of relationsRes.data ?? []) {
+    const teamName = teamNameById.get(relation.team_id)
+    const league = leagueById.get(relation.league_id)
+    if (!teamName || !league) continue
+    const category = league.category
+
+    let leaguesOfTeam = teamLeagues[category][teamName]
+    if (!leaguesOfTeam) {
+      leaguesOfTeam = new Set<string>()
+      teamLeagues[category][teamName] = leaguesOfTeam
+    }
+    leaguesOfTeam.add(league.name)
+
+    let teamsOfLeague = leagueTeams[category][league.name]
+    if (!teamsOfLeague) {
+      teamsOfLeague = new Set<string>()
+      leagueTeams[category][league.name] = teamsOfLeague
+    }
+    teamsOfLeague.add(teamName)
+  }
+
+  const sortSpanish = (values: Iterable<string>): string[] =>
+    [...values].sort((a, b) => a.localeCompare(b, 'es'))
+
+  const result: Record<ProductCategory, TeamLeagueMap> = {
+    seleccion: { teamLeagues: {}, leagueTeams: {} },
+    club: { teamLeagues: {}, leagueTeams: {} },
+  }
+  for (const category of ['seleccion', 'club'] as const) {
+    for (const [teamName, leaguesOfTeam] of Object.entries(teamLeagues[category])) {
+      result[category].teamLeagues[teamName] = sortSpanish(leaguesOfTeam)
+    }
+    for (const [leagueName, teamsOfLeague] of Object.entries(leagueTeams[category])) {
+      result[category].leagueTeams[leagueName] = sortSpanish(teamsOfLeague)
+    }
+  }
+
+  return result
+}
+
+/**
+ * Registra la asociacion equipo↔liga en `team_leagues`. Idempotente y tolerante
+ * a carreras.
+ *
+ * Usa upsert sobre la PK compuesta `(team_id, league_id)`: si la asociacion ya
+ * existia, la reactiva (`active = true`) en vez de fallar con duplicado. Como
+ * `team_leagues` solo tiene estas tres columnas, no hay datos maestros que se
+ * puedan pisar. Nunca lanza: un fallo de asociacion no puede impedir el
+ * guardado del producto.
+ */
+async function ensureTeamLeague(
+  admin: AdminClient,
+  teamId: string,
+  leagueId: string,
+): Promise<void> {
+  const { error } = await admin
+    .from('team_leagues')
+    .upsert(
+      { team_id: teamId, league_id: leagueId, active: true },
+      { onConflict: 'team_id,league_id' },
+    )
+
+  if (error) {
+    console.warn(
+      `[products-store] ensureTeamLeague(${teamId}, ${leagueId}): ${error.message} (se ignora, el producto se guarda igual)`,
+    )
+  }
 }
 
 /**
  * Productos eliminados (soft delete), ordenados del mas reciente al mas
  * antiguo. Devuelve tambien `deletedAt` con la fecha de eliminacion.
+ *
+ * La fuente de verdad de la eliminacion es `active = false`.
  */
 export async function getDeletedProducts(): Promise<DeletedProduct[]> {
   const admin = createAdminClient()
@@ -194,7 +413,7 @@ export async function getDeletedProducts(): Promise<DeletedProduct[]> {
   const { data, error } = await admin
     .from('products')
     .select(PRODUCT_SELECT)
-    .not('deleted_at', 'is', null)
+    .eq('active', false)
     .order('deleted_at', { ascending: false })
 
   if (error) {
@@ -229,20 +448,52 @@ function createId(draft: ProductDraft): string {
 }
 
 /**
- * Garantiza que el equipo exista en `teams` y devuelve su id.
- * Crea el registro si falta; tolera carreras (otro request pudo crearlo).
+ * Reactiva un registro maestro (`teams`/`leagues`) si esta desactivado.
+ *
+ * ELEGIDO: en vez de un upsert global (que podria pisar `name`/`category` con
+ * el payload nuevo), se hace un `update({ active: true })` apuntado por id SOLO
+ * cuando el registro existe con `active = false`. Asi el dato maestro existente
+ * nunca se sobrescribe y la reactivacion es un cambio minimo y explicito. Un
+ * fallo aca solo se loguea: reactivar es un beneficio, no puede impedir el
+ * guardado del producto.
  */
-async function ensureTeam(name: string): Promise<string> {
+async function reactivateIfInactive(
+  admin: AdminClient,
+  table: 'teams' | 'leagues',
+  id: string,
+  active: unknown,
+): Promise<void> {
+  if (active !== false) return
+  const { error } = await admin.from(table).update({ active: true }).eq('id', id)
+  if (error) {
+    console.warn(`[products-store] reactivar ${table}(${id}): ${error.message} (se ignora)`)
+  }
+}
+
+/**
+ * Garantiza que el equipo exista en `teams` y devuelve su id.
+ *
+ * Crea el registro si falta (activo por default, con su `category`); si ya
+ * existe, NO pisa su `category` (dato maestro) y solo lo reactiva si estaba
+ * desactivado. Tolerante a carreras (otro request pudo crearlo).
+ */
+async function ensureTeam(name: string, category: ProductCategory): Promise<string> {
   const admin = createAdminClient()
   const id = slugify(name) || 'equipo'
 
-  const existing = await admin.from('teams').select('id').eq('id', id).maybeSingle()
-  if (existing.data) return asIdRow(existing.data).id
+  const existing = await admin.from('teams').select('id, active').eq('id', id).maybeSingle()
+  if (existing.data) {
+    await reactivateIfInactive(admin, 'teams', id, existing.data.active)
+    return asIdRow(existing.data).id
+  }
 
-  const { error } = await admin.from('teams').insert({ id, name })
+  const { error } = await admin.from('teams').insert({ id, name, category })
   if (error) {
-    const retry = await admin.from('teams').select('id').eq('id', id).maybeSingle()
-    if (retry.data) return asIdRow(retry.data).id
+    const retry = await admin.from('teams').select('id, active').eq('id', id).maybeSingle()
+    if (retry.data) {
+      await reactivateIfInactive(admin, 'teams', id, retry.data.active)
+      return asIdRow(retry.data).id
+    }
     fail(`ensureTeam(${name})`, error)
   }
   return id
@@ -253,13 +504,19 @@ async function ensureLeague(name: string, category: ProductCategory): Promise<st
   const admin = createAdminClient()
   const id = slugify(name) || 'liga'
 
-  const existing = await admin.from('leagues').select('id').eq('id', id).maybeSingle()
-  if (existing.data) return asIdRow(existing.data).id
+  const existing = await admin.from('leagues').select('id, active').eq('id', id).maybeSingle()
+  if (existing.data) {
+    await reactivateIfInactive(admin, 'leagues', id, existing.data.active)
+    return asIdRow(existing.data).id
+  }
 
   const { error } = await admin.from('leagues').insert({ id, name, category })
   if (error) {
-    const retry = await admin.from('leagues').select('id').eq('id', id).maybeSingle()
-    if (retry.data) return asIdRow(retry.data).id
+    const retry = await admin.from('leagues').select('id, active').eq('id', id).maybeSingle()
+    if (retry.data) {
+      await reactivateIfInactive(admin, 'leagues', id, retry.data.active)
+      return asIdRow(retry.data).id
+    }
     fail(`ensureLeague(${name})`, error)
   }
   return id
@@ -269,8 +526,17 @@ export async function createProduct(draft: ProductDraft): Promise<Product> {
   const admin = createAdminClient()
   const id = createId(draft)
   const createdAt = new Date().toISOString()
-  const team_id = await ensureTeam(draft.team)
+  const team_id = await ensureTeam(draft.team, draft.category)
   const league_id = await ensureLeague(draft.league, draft.category)
+
+  // La asociacion es un dato maestro complementario: si falla, el producto se
+  // guarda igual (se reintenta en el proximo save).
+  try {
+    await ensureTeamLeague(admin, team_id, league_id)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.warn(`[products-store] createProduct(${id}): no se pudo asociar equipo-liga: ${message}`)
+  }
 
   const { error } = await admin.from('products').insert({
     id,
@@ -300,8 +566,15 @@ export async function createProduct(draft: ProductDraft): Promise<Product> {
 
 export async function updateProduct(id: string, draft: ProductDraft): Promise<Product | null> {
   const admin = createAdminClient()
-  const team_id = await ensureTeam(draft.team)
+  const team_id = await ensureTeam(draft.team, draft.category)
   const league_id = await ensureLeague(draft.league, draft.category)
+
+  try {
+    await ensureTeamLeague(admin, team_id, league_id)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    console.warn(`[products-store] updateProduct(${id}): no se pudo asociar equipo-liga: ${message}`)
+  }
 
   const { data, error } = await admin
     .from('products')
@@ -335,23 +608,24 @@ export async function deleteProduct(id: string): Promise<boolean> {
 }
 
 /**
- * Soft delete: marca la fila con `deleted_at = NOW()` en lugar de borrarla.
- * El producto deja de verse en el catalogo y en el inventario, pero se puede
- * restaurar desde `/admin/eliminados`.
+ * Soft delete: marca la fila con `active = false` y `deleted_at = NOW()`. El
+ * producto deja de verse en el catalogo y en el inventario, pero se puede
+ * restaurar desde `/admin/eliminados`. `active` es la fuente de verdad;
+ * `deleted_at` se mantiene como registro historico.
  */
 export async function softDeleteProduct(id: string): Promise<void> {
   const admin = createAdminClient()
   const { error } = await admin
     .from('products')
-    .update({ deleted_at: new Date().toISOString() })
+    .update({ active: false, deleted_at: new Date().toISOString() })
     .eq('id', id)
   if (error) fail(`softDeleteProduct(${id})`, error)
 }
 
-/** Restaura un producto eliminado: `deleted_at = NULL`. */
+/** Restaura un producto eliminado: `active = true` y `deleted_at = NULL`. */
 export async function restoreProduct(id: string): Promise<void> {
   const admin = createAdminClient()
-  const { error } = await admin.from('products').update({ deleted_at: null }).eq('id', id)
+  const { error } = await admin.from('products').update({ active: true, deleted_at: null }).eq('id', id)
   if (error) fail(`restoreProduct(${id})`, error)
 }
 

@@ -8,6 +8,7 @@ import type {
   SortOrder,
   StockStatus,
   Taxonomy,
+  TeamLeagueMap,
 } from '@/types/product'
 
 /**
@@ -93,6 +94,10 @@ function sortByLabel<T>(values: T[], label: (value: T) => string): T[] {
  * Una liga aparece bajo selección o club según los productos que la usan. Así
  * el panel y los filtros nunca ofrecen competiciones de clubes al cargar una
  * selección (ni al revés).
+ *
+ * Las asociaciones equipo↔ligas vienen de la tabla `team_leagues` (DB): esta
+ * función es pura y no tiene acceso a la base, así que las devuelve vacías. La
+ * DAL (`getTaxonomy` en products-store) las rellena con datos reales.
  */
 export function getTaxonomyByCategory(products: Product[]): Taxonomy {
   const buckets = (): Record<ProductCategory, string[]> => ({ seleccion: [], club: [] })
@@ -105,12 +110,12 @@ export function getTaxonomyByCategory(products: Product[]): Taxonomy {
   }
 
   return {
-    seleccion: { teams: teams.seleccion, leagues: leagues.seleccion },
-    club: { teams: teams.club, leagues: leagues.club },
+    seleccion: { teams: teams.seleccion, leagues: leagues.seleccion, associations: EMPTY_ASSOCIATIONS },
+    club: { teams: teams.club, leagues: leagues.club, associations: EMPTY_ASSOCIATIONS },
   }
 }
 
-export function getFacets(products: Product[]): ProductFacets {
+export function getFacets(products: Product[], associations: TeamLeagueMap): ProductFacets {
   const leagues = new Set<string>()
   const teams = new Set<string>()
   const sizes = new Set<string>()
@@ -138,7 +143,43 @@ export function getFacets(products: Product[]): ProductFacets {
       seleccion: byCategory.seleccion.teams,
       club: byCategory.club.teams,
     },
+    associations,
   }
+}
+
+/**
+ * Asociaciones vacías: un mapa sin entradas. Se usa como valor por defecto
+ * cuando no hay datos de `team_leagues` (p. ej. antes de correr la migración).
+ */
+export const EMPTY_ASSOCIATIONS: TeamLeagueMap = { teamLeagues: {}, leagueTeams: {} }
+
+/**
+ * Une dos `TeamLeagueMap` en uno solo, sin duplicar ni perder orden alfabético.
+ *
+ * Los nombres de liga son únicos por categoría, así que para el catálogo
+ * público alcanza con concatenar las ramas `seleccion` y `club`.
+ */
+export function mergeAssociations(a: TeamLeagueMap, b: TeamLeagueMap): TeamLeagueMap {
+  const teamNames = new Set([...Object.keys(a.teamLeagues), ...Object.keys(b.teamLeagues)])
+  const leagueNames = new Set([...Object.keys(a.leagueTeams), ...Object.keys(b.leagueTeams)])
+
+  const teamLeagues: Record<string, string[]> = {}
+  for (const team of teamNames) {
+    teamLeagues[team] = sortByLabel(
+      [...new Set([...(a.teamLeagues[team] ?? []), ...(b.teamLeagues[team] ?? [])])],
+      (value) => value,
+    )
+  }
+
+  const leagueTeams: Record<string, string[]> = {}
+  for (const league of leagueNames) {
+    leagueTeams[league] = sortByLabel(
+      [...new Set([...(a.leagueTeams[league] ?? []), ...(b.leagueTeams[league] ?? [])])],
+      (value) => value,
+    )
+  }
+
+  return { teamLeagues, leagueTeams }
 }
 
 /**

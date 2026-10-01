@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { cookies } from 'next/headers'
-import { ArrowUpRight, Layers, Package, Palette, Plus, Star, Store, TriangleAlert } from 'lucide-react'
+import { ArrowUpRight, Layers, Package, Palette, Plus, Star, Store, TriangleAlert, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth'
 import { LOW_STOCK_THRESHOLD, totalStock } from '@/lib/products'
@@ -64,12 +64,18 @@ export default async function AdminDashboard() {
         >
           Accesos rapidos
         </h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <QuickAction
             href="/admin/productos/nuevo"
             label="Nueva camiseta"
             description="Cargar un producto al catalogo"
             icon={Plus}
+          />
+          <QuickAction
+            href="/admin/equipos"
+            label="Equipos y ligas"
+            description="Administrar las listas maestras"
+            icon={Users}
           />
           <QuickAction
             href="/admin/apariencia"

@@ -82,7 +82,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="truncate text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500">
           {product.team} · {product.league}
         </p>
-        <h3 className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-zinc-950">
+        <h3 className="mt-1 text-sm font-medium leading-snug text-zinc-950">
           {/* Link adicional para que el titulo completo sea accesible */}
           <Link
             href={`/products/${product.id}`}

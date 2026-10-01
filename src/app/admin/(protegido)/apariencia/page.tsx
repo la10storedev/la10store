@@ -36,8 +36,6 @@ export default async function AppearancePage({
           heroTitle: settings.hero_title ?? '',
           heroSubtitle: settings.hero_subtitle ?? '',
           heroTagline: settings.hero_tagline ?? '',
-          heroCtaText: settings.hero_cta_text ?? '',
-          heroCtaLink: settings.hero_cta_link ?? '',
         }}
       />
     </div>

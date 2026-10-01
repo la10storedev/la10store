@@ -20,8 +20,6 @@ const HERO_FIELDS = [
   'hero_title',
   'hero_subtitle',
   'hero_tagline',
-  'hero_cta_text',
-  'hero_cta_link',
 ]
 
 async function requireSession(): Promise<void> {
@@ -66,6 +64,6 @@ export async function saveContactAction(
 
   revalidatePath('/')
   revalidatePath('/products/[id]')
-  revalidatePath('/admin/apariencia')
-  redirect('/admin/apariencia?guardado=1')
+  revalidatePath('/admin/contacto')
+  redirect('/admin/contacto?guardado=1')
 }

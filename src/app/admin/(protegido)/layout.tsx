@@ -5,7 +5,7 @@ import { AdminNav } from '@/components/admin/AdminNav'
 import { ButtonLink } from '@/components/ui/Button'
 import { logoutAction } from '@/app/admin/actions/auth'
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth'
-import { getDeletedProducts } from '@/lib/products-store'
+import { getTrashCounts } from '@/lib/taxonomy-store'
 import { siteConfig } from '@/lib/site'
 
 /**
@@ -27,10 +27,10 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
     redirect('/admin/login?next=/admin')
   }
 
-  // Para mostrar el link "Eliminados" en la nav solo cuando hay camisetas
-  // eliminadas (soft delete). Las acciones de delete/restore revalidan esta
-  // parte del layout.
-  const deletedProducts = await getDeletedProducts()
+  // Para mostrar el link "Eliminados" en la nav solo cuando hay algo en la
+  // papelera unificada (camisetas + equipos + ligas). Las acciones de delete /
+  // restore revalidan esta parte del layout.
+  const trashCounts = await getTrashCounts()
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -79,7 +79,7 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
       {/* Navegacion secundaria */}
       <div className="border-b border-zinc-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6">
-          <AdminNav deletedCount={deletedProducts.length} />
+          <AdminNav deletedCount={trashCounts.total} />
         </div>
       </div>
 

@@ -68,9 +68,64 @@ export function ProductForm({ product, taxonomy, justSaved = false }: ProductFor
 
   const errors = state.fieldErrors ?? {}
   const isSeleccion = draft.category === 'seleccion'
+  const categoryTaxonomy = taxonomy[draft.category]
+  const associations = categoryTaxonomy.associations
+
+  // Cascada bidireccional equipo <-> liga (por NOMBRE, desde team_leagues):
+  // - Si hay liga elegida, el select de equipo muestra solo los equipos de esa
+  //   liga (y viceversa).
+  // - Si la lista derivada no existe o esta vacia (p. ej. nombre nuevo agregado
+  //   con SelectWithAdd, o aun sin datos de asociacion), se usa la lista
+  //   completa de la categoria.
+  // - Al limpiar equipo o liga, el otro select vuelve a la lista completa.
+  const teamOptions =
+    draft.league && associations.leagueTeams[draft.league]?.length
+      ? associations.leagueTeams[draft.league]
+      : categoryTaxonomy.teams
+
+  const leagueOptions =
+    draft.team && associations.teamLeagues[draft.team]?.length
+      ? associations.teamLeagues[draft.team]
+      : categoryTaxonomy.leagues
 
   function set<K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) {
     setDraft((current) => ({ ...current, [key]: value }))
+  }
+
+  function handleTeamChange(value: string) {
+    setDraft((current) => {
+      const derivedLeagues = associations.teamLeagues[value]
+      const next = { ...current, team: value }
+      // Si el equipo elegido no juega la liga seleccionada, se limpia la liga.
+      // Solo cuando hay datos de asociacion para el equipo (si no, se deja tal
+      // cual: el fallback a lista completa ya lo cubre).
+      if (
+        current.league &&
+        derivedLeagues &&
+        derivedLeagues.length > 0 &&
+        !derivedLeagues.includes(current.league)
+      ) {
+        next.league = ''
+      }
+      return next
+    })
+  }
+
+  function handleLeagueChange(value: string) {
+    setDraft((current) => {
+      const derivedTeams = associations.leagueTeams[value]
+      const next = { ...current, league: value }
+      // Analogia: si la liga elegida no tiene el equipo seleccionado, se limpia.
+      if (
+        current.team &&
+        derivedTeams &&
+        derivedTeams.length > 0 &&
+        !derivedTeams.includes(current.team)
+      ) {
+        next.team = ''
+      }
+      return next
+    })
   }
 
   function setSize(index: number, patch: Partial<ProductSize>) {
@@ -185,11 +240,11 @@ export function ProductForm({ product, taxonomy, justSaved = false }: ProductFor
                 <SelectWithAdd
                   id="team"
                   value={draft.team}
-                  options={taxonomy[draft.category].teams}
+                  options={teamOptions}
                   placeholder="Argentina"
                   addLabel="Agregar equipo"
                   invalid={Boolean(errors.team)}
-                  onChange={(value) => set('team', value)}
+                  onChange={handleTeamChange}
                 />
               </Field>
 
@@ -241,11 +296,11 @@ export function ProductForm({ product, taxonomy, justSaved = false }: ProductFor
                 <SelectWithAdd
                   id="league"
                   value={draft.league}
-                  options={taxonomy[draft.category].leagues}
+                  options={leagueOptions}
                   placeholder={isSeleccion ? 'Mundial FIFA' : 'Liga Profesional'}
                   addLabel="Agregar liga"
                   invalid={Boolean(errors.league)}
-                  onChange={(value) => set('league', value)}
+                  onChange={handleLeagueChange}
                 />
               </Field>
 

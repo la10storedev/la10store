@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, Plus, Palette, Trash2, MessageCircle } from 'lucide-react'
+import { LayoutDashboard, Package, Plus, Palette, Trash2, MessageCircle, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 const links: { href: string; label: string; icon: LucideIcon; exact: boolean }[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/inventario', label: 'Inventario', icon: Package, exact: false },
   { href: '/admin/productos/nuevo', label: 'Nueva camiseta', icon: Plus, exact: false },
+  { href: '/admin/equipos', label: 'Equipos y ligas', icon: Users, exact: false },
   { href: '/admin/apariencia', label: 'Apariencia', icon: Palette, exact: false },
   { href: '/admin/contacto', label: 'Contacto', icon: MessageCircle, exact: false },
 ]
@@ -17,7 +18,9 @@ const links: { href: string; label: string; icon: LucideIcon; exact: boolean }[]
 export function AdminNav({ deletedCount = 0 }: { deletedCount?: number }) {
   const pathname = usePathname()
 
-  // El link a "Eliminados" aparece solo cuando hay camisetas eliminadas.
+  // El link a "Eliminados" aparece solo cuando hay algo en la papelera
+  // (camisetas + equipos + ligas). El conteo lo calcula el layout con
+  // `getTrashCounts()`.
   const visibleLinks = deletedCount > 0
     ? [...links, { href: '/admin/eliminados', label: 'Eliminados', icon: Trash2, exact: false }]
     : links

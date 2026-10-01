@@ -60,10 +60,26 @@ export type Catalog = {
   leagues: string[]
 }
 
+/**
+ * Asociación equipo↔ligas (por NOMBRE, sorted), leída de la tabla team_leagues.
+ */
+export type TeamLeagueMap = {
+  /** team name -> nombres de ligas del equipo (orden alfabético es) */
+  teamLeagues: Record<string, string[]>
+  /** league name -> nombres de equipos que juegan esa liga */
+  leagueTeams: Record<string, string[]>
+}
+
 /** Equipos y ligas/competiciones que corresponden a una categoría. */
 export type CategoryTaxonomy = {
   teams: string[]
   leagues: string[]
+  /**
+   * Asociaciones equipo↔ligas de esta categoría (por NOMBRE). Las ligas tienen
+   * categoría (`seleccion` | `club`) y los equipos se asocian vía ellas, así
+   * que un equipo aparece bajo la categoría de cada liga asociada.
+   */
+  associations: TeamLeagueMap
 }
 
 /**
@@ -99,4 +115,88 @@ export type ProductFacets = {
   leaguesByCategory: Record<ProductCategory, string[]>
   /** Equipos propios de cada categoría. */
   teamsByCategory: Record<ProductCategory, string[]>
+  /** Asociaciones equipo↔ligas (por nombre) para la cascada del filtro. */
+  associations: TeamLeagueMap
 }
+
+// ---------------------------------------------------------------------------
+// Equipos y ligas administrados (tablas `teams` / `leagues`)
+// ---------------------------------------------------------------------------
+
+/**
+ * Equipo administrado en el panel (fila de la tabla `teams` sin soft delete).
+ * `category` es la categoría de la columna homónima (agregada por la migración
+ * `scripts/add-taxonomy-columns.ts`); `productCount` cuenta las camisetas
+ * activas que lo usan.
+ */
+export type ManagedTeam = {
+  id: string
+  name: string
+  category: ProductCategory
+  active: boolean
+  productCount: number
+  /** IDs de las ligas activas asociadas al equipo. */
+  leagueIds: string[]
+}
+
+/**
+ * Liga administrada en el panel (fila de la tabla `leagues` sin soft delete).
+ * `productCount` cuenta las camisetas activas; `teamCount` los equipos
+ * asociados activos en `team_leagues`.
+ */
+export type ManagedLeague = {
+  id: string
+  name: string
+  category: ProductCategory
+  active: boolean
+  productCount: number
+  teamCount: number
+}
+
+/** Equipo en la papelera (soft delete: `deleted_at` seteado). */
+export type DeletedTeam = {
+  id: string
+  name: string
+  category: ProductCategory
+  deletedAt: string
+  /** Camisetas en CUALQUIER estado que referencian al equipo. */
+  productCount: number
+}
+
+/** Liga en la papelera (soft delete: `deleted_at` seteado). */
+export type DeletedLeague = {
+  id: string
+  name: string
+  category: ProductCategory
+  deletedAt: string
+  /** Camisetas en CUALQUIER estado que referencian a la liga. */
+  productCount: number
+  teamCount: number
+}
+
+/** Conteos de la papelera unificada (productos + equipos + ligas). */
+export type TrashCounts = {
+  products: number
+  teams: number
+  leagues: number
+  total: number
+}
+
+/**
+ * Resultado de una mutación de la taxonomía (equipos/ligas).
+ *
+ * - `has_products`: soft delete bloqueado porque el registro tiene camisetas
+ *   activas (`count`).
+ * - `referenced`: hard delete bloqueado porque el registro tiene camisetas en
+ *   cualquier estado (`count`).
+ * - `duplicate`: ya existe una fila con el id derivado del nombre.
+ * - `not_found`: no existe la fila a modificar.
+ * - `error`: fallo inesperado (la DAL nunca lanza en mutaciones).
+ */
+export type TaxonomyMutationResult =
+  | { ok: true }
+  | {
+      ok: false
+      reason: 'has_products' | 'referenced' | 'duplicate' | 'not_found' | 'error'
+      count?: number
+    }

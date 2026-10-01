@@ -1,65 +1,115 @@
+import type { ReactNode } from 'react'
+import { TrashClient } from '@/components/admin/TrashClient'
 import { getDeletedProducts } from '@/lib/products-store'
-import { formatDate } from '@/lib/format'
-import { EmptyState } from '@/components/ui/EmptyState'
-import { RestoreProductForm } from '@/components/admin/RestoreProductForm'
+import { getDeletedLeagues, getDeletedTeams } from '@/lib/taxonomy-store'
 
 /**
- * CAMISETAS ELIMINADAS (soft delete).
+ * PAPELERA UNIFICADA DEL PANEL.
  *
- * Server Component: lee los productos con `deleted_at` seteado y ofrece
- * restaurarlos. Restaurar vuelve la camiseta al inventario con su visibilidad
- * previa intacta.
+ * Server Component: lee las tres listas en paralelo (camisetas, equipos y
+ * ligas) y se las pasa a `TrashClient`. Las acciones vuelven con codigos en
+ * `searchParams` (`ok`, `error`, `restaurado` legacy) que esta pagina traduce
+ * a un banner.
  */
-export default async function AdminDeletedProducts({
+export default async function AdminTrashPage({
   searchParams,
 }: {
-  searchParams: Promise<{ restaurado?: string }>
+  searchParams: Promise<{ ok?: string; error?: string; n?: string; restaurado?: string }>
 }) {
-  const [{ restaurado }, deleted] = await Promise.all([searchParams, getDeletedProducts()])
+  const [{ ok, error, n, restaurado }, products, teams, leagues] = await Promise.all([
+    searchParams,
+    getDeletedProducts(),
+    getDeletedTeams(),
+    getDeletedLeagues(),
+  ])
+
+  const total = products.length + teams.length + leagues.length
+  const banner = buildTrashBanner({ ok, error, n, restaurado })
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Camisetas eliminadas</h1>
-        <p className="mt-1 text-sm text-zinc-600">
-          {deleted.length > 0
-            ? `${deleted.length} camisetas eliminadas. Podés restaurarlas cuando quieras.`
-            : 'Acá aparecen las camisetas que eliminás desde el inventario.'}
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Papelera</h1>
+        <p className="mt-1 max-w-2xl text-sm text-zinc-600">
+          {total > 0
+            ? `${total} ${
+                total === 1 ? 'elemento en la papelera' : 'elementos en la papelera'
+              }. Podés restaurar lo que quieras o eliminarlo definitivamente.`
+            : 'Acá caen las camisetas, equipos y ligas que sacás del catálogo.'}
         </p>
       </div>
 
-      {restaurado ? (
-        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 ring-1 ring-inset ring-emerald-200">
-          Camiseta restaurada al inventario.
-        </p>
-      ) : null}
+      {banner}
 
-      {deleted.length === 0 ? (
-        <EmptyState
-          title="No hay camisetas eliminadas"
-          description="Cuando elimines una camiseta desde el inventario, aparece acá para poder restaurarla."
-        />
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {deleted.map((product) => (
-            <li
-              key={product.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3"
-            >
-              <div className="min-w-0">
-                <p className="truncate font-semibold text-zinc-900">{product.name}</p>
-                <p className="truncate text-xs text-zinc-500">
-                  {product.team} · {product.league}
-                </p>
-                <p className="mt-1 text-xs text-zinc-400">
-                  Eliminada el {formatDate(product.deletedAt)}
-                </p>
-              </div>
-              <RestoreProductForm id={product.id} />
-            </li>
-          ))}
-        </ul>
-      )}
+      <TrashClient products={products} teams={teams} leagues={leagues} />
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+
+type BannerInput = { ok?: string; error?: string; n?: string; restaurado?: string }
+
+/**
+ * Banner superior a partir de los codigos de `searchParams`.
+ *
+ * - `ok=restaurado` o `restaurado=1` (legacy de la papelera de camisetas):
+ *   confirmacion de que se restauro algo.
+ * - `ok=purgado`: confirmacion de un eliminado definitivo.
+ * - `error=referenciado&n=N`: la accion intento purgar pero hay camisetas
+ *   que siguen referenciando el registro (incluso en la papelera).
+ */
+function buildTrashBanner({ ok, error, n, restaurado }: BannerInput): ReactNode {
+  const count = Number(n)
+  const safeCount = Number.isFinite(count) && count > 0 ? count : 0
+
+  if (error) {
+    let message = 'No pudimos completar la acción. Probá de nuevo.'
+    switch (error) {
+      case 'referenciado':
+        message = `No se puede eliminar definitivamente: quedan ${safeCount} ${
+          safeCount === 1 ? 'camiseta' : 'camisetas'
+        } que la referencian. Purgá esas camisetas primero.`
+        break
+      case 'no_encontrado':
+        message = 'No encontramos ese registro.'
+        break
+    }
+    return <BannerAlert tone="error" message={message} />
+  }
+
+  if (ok) {
+    let message: string | null = null
+    switch (ok) {
+      case 'restaurado':
+        message = 'Restaurado al inventario.'
+        break
+      case 'purgado':
+        message = 'Eliminado definitivamente.'
+        break
+    }
+    if (message) return <BannerAlert tone="success" message={message} />
+  }
+
+  // Compat: `restoreProductAction` redirige con `restaurado=1`.
+  if (restaurado) {
+    return <BannerAlert tone="success" message="Camiseta restaurada al inventario." />
+  }
+
+  return null
+}
+
+function BannerAlert({ tone, message }: { tone: 'success' | 'error'; message: string }) {
+  const styles =
+    tone === 'success'
+      ? 'bg-emerald-50 text-emerald-800 ring-emerald-200'
+      : 'bg-red-50 text-red-700 ring-red-200'
+  return (
+    <p
+      role={tone === 'error' ? 'alert' : 'status'}
+      className={`rounded-xl px-4 py-3 text-sm ring-1 ring-inset ${styles}`}
+    >
+      {message}
+    </p>
   )
 }
