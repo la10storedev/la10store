@@ -20,8 +20,11 @@ type ProductCardProps = {
 }
 
 /**
- * Tarjeta del catalogo: imagen protagonista, sin bordes ni esquinas redondeadas.
- * Debajo, el texto minimo (equipo, nombre, precio y un aviso de stock).
+ * Tarjeta del catalogo: imagen protagonista y debajo el texto minimo
+ * (equipo, nombre, precio y un aviso de stock).
+ *
+ * Estetica en oscuro: tarjeta con superficie `bg-zinc-900`, textos y bordes
+ * en variantes `dark:` para que se lea sobre el fondo `#09090b` del wrapper.
  *
  * Es un Server Component; la unica parte interactiva es el link estirado.
  */
@@ -44,9 +47,9 @@ export function ProductCard({ product }: ProductCardProps) {
     // `min-w-0` en el <article>: corta la cadena de `min-width: auto` de los
     // flex items para que la tarjeta nunca exceda el ancho de la columna del
     // grid, dejando trabajar a `truncate` y `line-clamp-2` correctamente.
-    <article className="group relative flex min-w-0 flex-col transition-shadow duration-300 group-hover:shadow-lg">
+    <article className="group relative flex min-w-0 flex-col rounded-2xl border border-zinc-200 bg-white transition-shadow duration-300 hover:border-zinc-950 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-100">
       {/* Imagen: sin recuadro, el producto flota sobre el fondo blanco. */}
-      <div className="relative aspect-square overflow-hidden bg-zinc-100">
+      <div className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-800">
         <Link href={`/products/${product.id}`} className="block size-full" tabIndex={-1} aria-hidden>
           <ProductImage
             src={product.images[0]}
@@ -68,7 +71,7 @@ export function ProductCard({ product }: ProductCardProps) {
         ) : null}
 
         {status === 'encargo' ? (
-          <span className="absolute inset-x-0 bottom-0 bg-brand-100 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-800">
+          <span className="absolute inset-x-0 bottom-0 bg-brand-100 py-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-800 dark:bg-brand-500/20 dark:text-brand-200">
             Encargo
           </span>
         ) : null}
@@ -78,11 +81,11 @@ export function ProductCard({ product }: ProductCardProps) {
       {/* `min-w-0` en el contenedor flex-col: permite que sus hijos
           (`truncate`, `line-clamp-2`, texto largo) se contraigan por debajo
           del ancho intrinseco de su contenido y no empujen la tarjeta. */}
-      <div className="flex min-w-0 flex-1 flex-col pt-3">
-        <p className="truncate text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500">
+      <div className="flex min-w-0 flex-1 flex-col p-4">
+        <p className="truncate text-[11px] font-medium uppercase tracking-[0.1em] text-zinc-500 dark:text-zinc-400">
           {product.team} · {product.league}
         </p>
-        <h3 className="mt-1 text-sm font-medium leading-snug text-zinc-950">
+        <h3 className="mt-1 text-sm font-medium leading-snug text-zinc-950 dark:text-zinc-100">
           {/* Link adicional para que el titulo completo sea accesible */}
           <Link
             href={`/products/${product.id}`}
@@ -94,9 +97,11 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Fila precio + "Ultimas N u.": `min-w-0` para que la fila no se
             estire; el <span> de stock se trunca si no entra junto al precio. */}
         <div className="mt-1.5 flex min-w-0 items-center gap-2">
-          <p className="shrink-0 text-sm font-semibold text-zinc-950">{formatPrice(product.price)}</p>
+          <p className="shrink-0 text-sm font-semibold text-zinc-950 dark:text-zinc-100">
+            {formatPrice(product.price)}
+          </p>
           {status === 'ultimas' ? (
-            <span className="min-w-0 truncate text-[11px] font-medium text-amber-700">
+            <span className="min-w-0 truncate rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-zinc-800 dark:text-amber-400">
               Ultimas {totalStock(product)} u.
             </span>
           ) : null}
@@ -104,7 +109,9 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Linea siempre presente: garantiza la misma altura entre tarjetas
             con y sin talles con stock. Mismo `mt-0.5` + `text-[11px]` que
             antes, asi el alto de la linea es identico al caso anterior. */}
-        <p className="mt-0.5 truncate text-[11px] text-zinc-400">{tallesLabel}</p>
+        <p className="mt-2 truncate text-[11px] text-zinc-400 dark:text-zinc-500">
+          {tallesLabel}
+        </p>
       </div>
     </article>
   )

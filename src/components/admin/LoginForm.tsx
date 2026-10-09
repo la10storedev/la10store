@@ -53,11 +53,6 @@ export function LoginForm({ next }: LoginFormProps) {
       <Button type="submit" size="lg" disabled={pending} className="w-full">
         {pending ? 'Verificando…' : 'Entrar al panel'}
       </Button>
-
-      <p className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800">
-        <strong className="font-semibold">Demo:</strong> usuario <code>admin</code> y contrasena{' '}
-        <code>admin123</code> (definidos en <code>.env.local</code>). Cambialos antes de publicar.
-      </p>
     </form>
   )
 }

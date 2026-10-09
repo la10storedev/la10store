@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
+import type { ComponentProps, ComponentPropsWithoutRef, ReactNode } from 'react'
 
 /**
  * Controles de formulario reutilizables.
@@ -10,8 +10,10 @@ import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 const controlBase =
   'w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm text-zinc-900 ' +
   'placeholder:text-zinc-400 transition ' +
-  'focus:border-brand-600 focus:outline-2 focus:outline-offset-0 focus:outline-brand-600/40 ' +
-  'disabled:cursor-not-allowed disabled:bg-zinc-50'
+  'focus:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950/10 ' +
+  'disabled:cursor-not-allowed disabled:bg-zinc-50 ' +
+  'dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 ' +
+  'dark:focus:border-zinc-100 dark:focus:ring-zinc-100/10 dark:disabled:bg-zinc-800'
 
 type FieldProps = {
   /** Debe coincidir con el `id` del control hijo. */
@@ -27,7 +29,7 @@ type FieldProps = {
 export function Field({ htmlFor, label, hint, error, className = '', children }: FieldProps) {
   return (
     <div className={['flex flex-col gap-1.5', className].filter(Boolean).join(' ')}>
-      <label htmlFor={htmlFor} className="text-sm font-medium text-zinc-800">
+      <label htmlFor={htmlFor} className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
         {label}
       </label>
       {children}
@@ -36,7 +38,7 @@ export function Field({ htmlFor, label, hint, error, className = '', children }:
           {error}
         </p>
       ) : hint ? (
-        <p id={`${htmlFor}-hint`} className="text-xs text-zinc-500">
+        <p id={`${htmlFor}-hint`} className="text-xs text-zinc-500 dark:text-zinc-400">
           {hint}
         </p>
       ) : null}
@@ -70,7 +72,7 @@ export function Input({ id, invalid, hint, className = '', ...props }: InputProp
   )
 }
 
-type TextareaProps = ComponentPropsWithoutRef<'textarea'> & {
+type TextareaProps = ComponentProps<'textarea'> & {
   id: string
   invalid?: boolean
   hint?: ReactNode

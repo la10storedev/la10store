@@ -1,4 +1,4 @@
-import { getWhatsAppNumber } from '@/lib/products-store'
+import { getWhatsAppMessage, getWhatsAppNumber } from '@/lib/products-store'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 
 /**
@@ -19,7 +19,10 @@ type HeroProps = {
 
 export async function Hero({ image, title, subtitle, tagline, ctaText, ctaLink, children }: HeroProps) {
   const background = image && image.trim() !== '' ? image : '/img/hero.jpg'
-  const whatsappNumber = await getWhatsAppNumber()
+  const [whatsappNumber, whatsappMessage] = await Promise.all([
+    getWhatsAppNumber(),
+    getWhatsAppMessage(),
+  ])
 
   return (
     <section className="relative isolate flex flex-col bg-zinc-950 text-white">
@@ -55,7 +58,7 @@ export async function Hero({ image, title, subtitle, tagline, ctaText, ctaLink, 
             {ctaText || 'Ver catalogo'}
           </a>
           <a
-            href={buildWhatsAppLink({ productName: 'una camiseta del catalogo' }, whatsappNumber)}
+            href={buildWhatsAppLink({ productName: 'un articulo del catalogo' }, whatsappNumber, whatsappMessage)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 rounded-none border border-white bg-transparent px-7 py-3.5 text-sm font-semibold uppercase tracking-[0.08em] text-white transition-colors duration-200 hover:bg-white hover:text-zinc-900"

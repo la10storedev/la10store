@@ -1,71 +1,88 @@
-import Link from 'next/link'
+import { Mail, MessageCircle } from 'lucide-react'
 import { Logo } from '@/components/layout/Logo'
-import { getWhatsAppNumber } from '@/lib/products-store'
+import { InstagramIcon } from '@/components/ui/InstagramIcon'
+import {
+  getContactNumbers,
+  getFooterSettings,
+  getWhatsAppMessage,
+  getWhatsAppNumber,
+} from '@/lib/products-store'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 import { siteConfig } from '@/lib/site'
 
 /**
- * Pie de sitio sobre fondo negro.
- * Cierra la pagina con el contraste fuerte del estilo minimalista.
+ * Pie de sitio sobre fondo negro fijo (`#09090b`, no cambia con el modo
+ * oscuro). El contenido (descripcion, contacto, copyright) lo edita el admin
+ * desde el panel y se lee de `site_settings`.
+ *
+ * Layout: dos columnas (marca + contacto). La columna de navegacion se
+ * elimino: los unicos accesos relevantes son los de contacto directo
+ * (WhatsApp, email, Instagram).
  */
 export async function Footer() {
   const year = new Date().getFullYear()
-  const whatsappNumber = await getWhatsAppNumber()
+  const [{ description, email, instagramUrl, copyright }, contacts, whatsappNumber, whatsappMessage] =
+    await Promise.all([
+      getFooterSettings(),
+      getContactNumbers(),
+      getWhatsAppNumber(),
+      getWhatsAppMessage(),
+    ])
+
+  const copyrightText = copyright
+    .replaceAll('{year}', String(year))
+    .replaceAll('{name}', siteConfig.name)
 
   return (
-    <footer className="mt-24 bg-zinc-950 text-white">
-      <div className="mx-auto grid max-w-[1400px] gap-10 px-4 py-16 sm:px-6 md:grid-cols-3 lg:px-10">
+    <footer className="mt-24 border-t border-zinc-800 bg-[#09090b] text-zinc-100">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-2">
         <div className="flex flex-col gap-4">
           <Logo tone="light" />
-          <p className="max-w-xs text-sm leading-relaxed text-zinc-400">{siteConfig.description}</p>
+          <h2 className="text-lg font-semibold text-white">{siteConfig.shortName}</h2>
+          <p className="max-w-sm text-sm leading-relaxed text-zinc-400">{description}</p>
         </div>
 
-        <nav className="flex flex-col gap-3 text-sm" aria-label="Navegacion del pie">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Navegacion</p>
-          <Link href="/" className="text-zinc-300 transition-colors hover:text-white">
-            Catalogo
-          </Link>
-          <Link href="/#equipos" className="text-zinc-300 transition-colors hover:text-white">
-            Equipos
-          </Link>
-          <Link href="/#envio-pagos" className="text-zinc-300 transition-colors hover:text-white">
-            Envio y Pagos
-          </Link>
-        </nav>
-
         <div className="flex flex-col gap-3 text-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">Contacto</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Contacto
+          </p>
+          {contacts.map((contact) => (
+            <a
+              key={`${contact.name}-${contact.number}`}
+              href={buildWhatsAppLink(
+                { productName: 'un articulo del catalogo' },
+                contact.number || whatsappNumber,
+                whatsappMessage,
+              )}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 text-sm text-zinc-300 transition-colors hover:text-white"
+            >
+              <MessageCircle size={16} aria-hidden />
+              WhatsApp · {contact.name}
+            </a>
+          ))}
           <a
-            href={buildWhatsAppLink({ productName: 'una camiseta del catalogo' }, whatsappNumber)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-zinc-300 transition-colors hover:text-white"
+            href={`mailto:${email}`}
+            className="flex items-center gap-2 text-sm text-zinc-300 transition-colors hover:text-white"
           >
-            WhatsApp
+            <Mail size={16} aria-hidden />
+            {email}
           </a>
           <a
-            href={`mailto:${siteConfig.contactEmail}`}
-            className="text-zinc-300 transition-colors hover:text-white"
-          >
-            {siteConfig.contactEmail}
-          </a>
-          <a
-            href={siteConfig.instagramUrl}
+            href={instagramUrl}
             target="_blank"
-            rel="noopener noreferrer"
-            className="text-zinc-300 transition-colors hover:text-white"
+            rel="noreferrer"
+            className="flex items-center gap-2 text-sm text-zinc-300 transition-colors hover:text-white"
           >
+            <InstagramIcon size={16} aria-hidden />
             Instagram
           </a>
         </div>
       </div>
 
-      <div className="border-t border-white/10 px-4 py-6 sm:px-6 lg:px-10">
-        <p className="mx-auto max-w-[1400px] text-xs text-zinc-500">
-          © {year}{' '}
-          <span className="font-semibold text-brand-500">{siteConfig.name}</span>. Catalogo
-          informativo: no procesamos pagos online, la compra se coordina por WhatsApp.
-        </p>
+      <div className="border-t border-zinc-800 px-4 py-6 sm:px-6">
+        <p className="mx-auto max-w-6xl text-xs text-zinc-500">{copyrightText}</p>
       </div>
     </footer>
   )

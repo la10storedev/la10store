@@ -11,6 +11,10 @@ import { Field, Input, Textarea } from '@/components/ui/Form'
  *
  * La imagen se sube a Cloudinary por el mismo `/api/upload` que usan las
  * camisetas; el resto viaja en el FormData al server action.
+ *
+ * Antes tenia un control de "Tema de la tienda" (claro/oscuro) con un
+ * selector manual; ese control se elimino porque el modo oscuro lo maneja
+ * el visitante desde la barra publica, con `next-themes`.
  */
 type AppearanceFormProps = {
   initial: {

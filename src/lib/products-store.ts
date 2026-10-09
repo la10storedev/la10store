@@ -1,6 +1,7 @@
 import { addTaxonomyValue, getTaxonomyByCategory } from '@/lib/products'
 import { siteConfig } from '@/lib/site'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { DEFAULT_WHATSAPP_MESSAGE } from '@/lib/whatsapp'
 import type {
   Product,
   ProductCategory,
@@ -711,7 +712,38 @@ const DEFAULT_SITE_SETTINGS: Record<string, string> = {
   hero_cta_text: 'Ver catalogo',
   hero_cta_link: '#catalogo',
   whatsapp_number: '5491123456789',
+  whatsapp_message: DEFAULT_WHATSAPP_MESSAGE,
+  contact_numbers: '[]',
+  shipping_title: 'Envío y pagos',
+  shipping_items: '[]',
+  footer_description: siteConfig.description,
+  footer_email: siteConfig.contactEmail,
+  footer_instagram_url: siteConfig.instagramUrl,
+  footer_copyright:
+    '© {year} {name}. Catalogo informativo: no procesamos pagos online, la compra se coordina por WhatsApp.',
 }
+
+/** Icono aceptado por un item de la seccion "Envio y pagos". */
+export type ShippingIcon =
+  | 'truck'
+  | 'package'
+  | 'cash'
+  | 'wallet'
+  | 'card'
+  | 'moto'
+  | 'store'
+  | 'map-pin'
+  | 'clock'
+  | 'repeat'
+  | 'shield'
+  | 'percent'
+  | 'chat'
+
+/** Item editable de la seccion "Envio y pagos". */
+export type ShippingItem = { title: string; body: string; icon: ShippingIcon }
+
+/** Contenido configurable de la seccion "Envio y pagos". */
+export type ShippingSettings = { title: string; items: ShippingItem[] }
 
 /** Devuelve todas las filas de `site_settings` como un objeto `{ key: value }`. Si la tabla no existe, devuelve defaults. */
 export async function getSiteSettings(): Promise<Record<string, string>> {
@@ -743,13 +775,159 @@ export async function setSiteSetting(key: string, value: string): Promise<void> 
 }
 
 /**
- * Número de WhatsApp configurado por el admin en `site_settings`.
- * Solo servidor (usa la DAL). Si `whatsapp_number` está vacío, cae al
- * default de `siteConfig`.
+ * Número de WhatsApp principal configurado por el admin. Es el primer
+ * contacto editable de `contact_numbers`; si no hay ninguno, cae al
+ * `whatsapp_number` o al default de `siteConfig`. Solo servidor (usa la DAL).
  */
 export async function getWhatsAppNumber(): Promise<string> {
+  const contacts = await getContactNumbers()
+  return contacts[0]?.number || siteConfig.whatsappNumber
+}
+
+/**
+ * Plantilla del mensaje de WhatsApp configurada por el admin en
+ * `site_settings`. Solo servidor (usa la DAL). Si la fila esta vacia, cae a
+ * `DEFAULT_WHATSAPP_MESSAGE` (definido en `@/lib/whatsapp`).
+ */
+export async function getWhatsAppMessage(): Promise<string> {
   const settings = await getSiteSettings()
-  return settings.whatsapp_number?.trim() || siteConfig.whatsappNumber
+  const value = settings.whatsapp_message?.trim()
+  return value && value !== '' ? value : DEFAULT_WHATSAPP_MESSAGE
+}
+
+/**
+ * Contacto editable de WhatsApp (nombre visible + numero en digitos).
+ */
+export type Contact = { id?: string; name: string; number: string }
+
+/**
+ * Contactos editables de WhatsApp. Lee `contact_numbers` (JSON string) de
+ * `site_settings`. Si esta vacio, es invalido o ningun numero es valido, cae
+ * al `whatsapp_number` configurado (o al default de `siteConfig`). Siempre
+ * devuelve al menos una fila.
+ */
+export async function getContactNumbers(): Promise<Contact[]> {
+  const settings = await getSiteSettings()
+
+  let parsed: unknown = []
+  try {
+    parsed = JSON.parse(settings.contact_numbers || '[]')
+  } catch {
+    parsed = []
+  }
+
+  const rows = Array.isArray(parsed) ? parsed : []
+  const contacts: Contact[] = rows
+    .map((row) => {
+      const value = (row ?? {}) as { name?: unknown; number?: unknown }
+      return {
+        name: String(value.name ?? '').trim(),
+        number: String(value.number ?? '').replace(/\D/g, ''),
+      }
+    })
+    .filter((row) => row.number !== '')
+
+  if (contacts.length > 0) return contacts
+
+  return [
+    {
+      name: 'WhatsApp',
+      number: settings.whatsapp_number || siteConfig.whatsappNumber,
+    },
+  ]
+}
+
+/** Enlace de navegacion del pie de pagina. */
+export type FooterLink = { label: string; href: string }
+
+/** Contenido configurable del pie de pagina. */
+export type FooterSettings = {
+  description: string
+  email: string
+  instagramUrl: string
+  copyright: string
+}
+
+/**
+ * Contenido del footer leido de `site_settings`, con fallback a `siteConfig`.
+ */
+export async function getFooterSettings(): Promise<FooterSettings> {
+  const settings = await getSiteSettings()
+
+  return {
+    description: settings.footer_description?.trim() || siteConfig.description,
+    email: settings.footer_email?.trim() || siteConfig.contactEmail,
+    instagramUrl: settings.footer_instagram_url?.trim() || siteConfig.instagramUrl,
+    copyright:
+      settings.footer_copyright?.trim() ||
+      '© {year} {name}. Catalogo informativo: no procesamos pagos online, la compra se coordina por WhatsApp.',
+  }
+}
+
+/** Items por defecto de la seccion "Envio y pagos". */
+const DEFAULT_SHIPPING_ITEMS: ShippingItem[] = [
+  { title: 'Envíos a todo el país', body: 'Despachamos por correo o moto mensajería según tu ubicación. Te avisamos el tracking ni bien sale.', icon: 'truck' },
+  { title: 'Pagá como quieras', body: 'Efectivo, transferencia o Mercado Pago. Coordinamos el pago luego de confirmar stock.', icon: 'card' },
+  { title: 'Atención por WhatsApp', body: 'Cualquier duda la resolvemos por chat. Respondemos en el día.', icon: 'chat' },
+]
+
+/**
+ * Contenido de la seccion "Envio y pagos" leido de `site_settings`. Si la
+ * lista no se puede parsear, esta vacia o el valor es la cadena vacia, cae a
+ * los items por defecto.
+ */
+export async function getShippingSettings(): Promise<ShippingSettings> {
+  const settings = await getSiteSettings()
+
+  let parsed: unknown = null
+  const raw = settings.shipping_items
+  if (raw && raw !== '') {
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      parsed = null
+    }
+  }
+
+  const rows = Array.isArray(parsed) ? parsed : []
+  const icons: ShippingIcon[] = [
+    'truck',
+    'package',
+    'cash',
+    'wallet',
+    'card',
+    'moto',
+    'store',
+    'map-pin',
+    'clock',
+    'repeat',
+    'shield',
+    'percent',
+    'chat',
+  ]
+  const items: ShippingItem[] = rows
+    .map((row) => {
+      const value = (row ?? {}) as { title?: unknown; body?: unknown; icon?: unknown }
+      const icon = String(value.icon ?? '') as ShippingIcon
+      return {
+        title: String(value.title ?? '').trim(),
+        body: String(value.body ?? '').trim(),
+        icon,
+      }
+    })
+    .filter((item) => item.title !== '' && item.body !== '' && icons.includes(item.icon))
+
+  if (items.length === 0) {
+    return {
+      title: settings.shipping_title || 'Envío y pagos',
+      items: DEFAULT_SHIPPING_ITEMS,
+    }
+  }
+
+  return {
+    title: settings.shipping_title || 'Envío y pagos',
+    items,
+  }
 }
 
 // ---------------------------------------------------------------------------

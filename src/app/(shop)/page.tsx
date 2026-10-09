@@ -1,13 +1,33 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { CreditCard, MessageCircle, Truck } from 'lucide-react'
+import {
+  Banknote,
+  Bike,
+  Clock,
+  CreditCard,
+  MapPin,
+  MessageCircle,
+  Package,
+  Percent,
+  Repeat,
+  ShieldCheck,
+  Store,
+  Truck,
+  Wallet,
+} from 'lucide-react'
 import { Hero } from '@/components/shop/Hero'
 import { ProductFilters } from '@/components/products/ProductFilters'
 import { ProductGrid } from '@/components/products/ProductGrid'
 import { filterProducts, getFacets, mergeAssociations, parseFilters, sortProducts } from '@/lib/products'
-import { getAllProducts, getSiteSettings, getTeamLeagueAssociations } from '@/lib/products-store'
+import {
+  getAllProducts,
+  getShippingSettings,
+  getSiteSettings,
+  getTeamLeagueAssociations,
+  type ShippingIcon,
+} from '@/lib/products-store'
 import { siteConfig } from '@/lib/site'
+import type { LucideIcon } from 'lucide-react'
 
 /**
  * CATALOGO PUBLICO.
@@ -24,7 +44,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Catalogo',
-  description: `Listado completo de camisetas de futbol. ${siteConfig.description}`,
+  description: `Listado completo de productos. ${siteConfig.description}`,
 }
 
 type CatalogPageProps = {
@@ -32,12 +52,45 @@ type CatalogPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
 
+/** Resuelve el icono de lucide-react a partir del slug que guarda el admin. */
+function resolveShippingIcon(icon: ShippingIcon): LucideIcon {
+  switch (icon) {
+    case 'truck':
+      return Truck
+    case 'package':
+      return Package
+    case 'cash':
+      return Banknote
+    case 'wallet':
+      return Wallet
+    case 'card':
+      return CreditCard
+    case 'moto':
+      return Bike
+    case 'store':
+      return Store
+    case 'map-pin':
+      return MapPin
+    case 'clock':
+      return Clock
+    case 'repeat':
+      return Repeat
+    case 'shield':
+      return ShieldCheck
+    case 'percent':
+      return Percent
+    case 'chat':
+      return MessageCircle
+  }
+}
+
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
-  const [products, query, heroSettings, associationsByCategory] = await Promise.all([
+  const [products, query, heroSettings, associationsByCategory, shippingSettings] = await Promise.all([
     getAllProducts(),
     searchParams,
     getSiteSettings(),
     getTeamLeagueAssociations(),
+    getShippingSettings(),
   ])
 
   const filters = parseFilters(query)
@@ -72,12 +125,12 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       {/* Grilla de productos                                              */}
       {/* ---------------------------------------------------------------- */}
       <section id="catalogo" className="scroll-mt-20">
-        <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
           <div className="mb-6 flex items-baseline justify-between gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-950">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-zinc-950 dark:text-zinc-100">
               {visible.length === products.length
-                ? `${products.length} camisetas`
-                : `${visible.length} de ${products.length} camisetas`}
+                ? `${products.length} productos`
+                : `${visible.length} de ${products.length} productos`}
             </h2>
           </div>
 
@@ -86,77 +139,29 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       </section>
 
       {/* ---------------------------------------------------------------- */}
-      {/* Equipos: accesos rapidos en fila scrolleable                    */}
-      {/* ---------------------------------------------------------------- */}
-      <section id="equipos" className="scroll-mt-20 border-t border-zinc-200">
-        <div className="mx-auto max-w-[1400px] px-4 py-14 sm:px-6 lg:px-10">
-          <h2 className="text-2xl font-black uppercase tracking-tight text-zinc-950">Equipos</h2>
-          <p className="mt-2 max-w-xl text-sm text-zinc-500">
-            Entradas rapidas por equipo. Tambien podes filtrar desde la barra de arriba.
-          </p>
-
-          <div className="-mx-4 mt-6 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-            <ul className="flex gap-2">
-              {facets.teams.map((team) => (
-                <li key={team} className="shrink-0">
-                  <Link
-                    href={`/?team=${encodeURIComponent(team)}`}
-                    className="inline-flex border border-zinc-300 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-950 transition-colors hover:border-brand-600 hover:bg-brand-600 hover:text-white"
-                  >
-                    {team}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
-            {facets.leagues.map((league) => (
-              <li key={league}>
-                <Link
-                  href={`/?league=${encodeURIComponent(league)}`}
-                  className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 underline-offset-4 transition-colors hover:text-zinc-950 hover:underline"
-                >
-                  {league}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* ---------------------------------------------------------------- */}
       {/* Envio y pagos                                                    */}
       {/* ---------------------------------------------------------------- */}
-      <section id="envio-pagos" className="scroll-mt-20 border-t border-zinc-200">
-        <div className="mx-auto max-w-[1400px] px-4 py-16 sm:px-6 lg:px-10">
-          <h2 className="text-2xl font-black uppercase tracking-tight text-zinc-950">
-            Envio y Pagos
+      <section id="envio-pagos" className="scroll-mt-20 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+          <h2 className="text-2xl font-black uppercase tracking-tight text-zinc-950 dark:text-zinc-100">
+            {shippingSettings.title}
           </h2>
           <div className="mt-8 grid gap-8 sm:grid-cols-3">
-            {[
-              {
-                title: 'Envio a todo el pais',
-                body: 'Enviamos a todo el país por encomienda o transporte. Consultanos por WhatsApp para coordinar el envío y conocer el costo según tu zona.',
-                icon: Truck,
-              },
-              {
-                title: 'Medios de pago',
-                body: 'Aceptamos transferencia bancaria, efectivo y otros medios de pago. Consultanos las opciones disponibles.',
-                icon: CreditCard,
-              },
-              {
-                title: 'Como comprar',
-                body: 'Elegí tu camiseta, consultanos disponibilidad por WhatsApp y coordinamos el pago y envío. Sin carrito, sin pagos online: hablamos directo.',
-                icon: MessageCircle,
-              },
-            ].map((item) => (
-              <div key={item.title} className="border-t-2 border-brand-600 pt-4">
-                <item.icon className="size-5 text-brand-600" aria-hidden />
-                <h3 className="mt-2 text-base font-bold text-zinc-950">{item.title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-zinc-500">{item.body}</p>
-              </div>
-            ))}
+            {shippingSettings.items.map((item, index) => {
+              const Icon = resolveShippingIcon(item.icon)
+              return (
+                <div
+                  key={`${item.title}-${index}`}
+                  className="border-t-2 border-brand-600 pt-4 dark:border-brand-400"
+                >
+                  <Icon className="size-5 text-brand-600 dark:text-brand-400" aria-hidden />
+                  <h3 className="mt-2 text-base font-semibold text-zinc-950 dark:text-zinc-100">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{item.body}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -167,8 +172,11 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
 /** Placeholder mientras se resuelve el componente que usa `useSearchParams`. */
 function FiltersSkeleton() {
   return (
-    <div className="border-y border-zinc-200">
-      <div className="mx-auto h-14 max-w-[1400px] animate-pulse px-4 sm:px-6 lg:px-10" aria-hidden />
+    <div className="border-y border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
+      <div
+        className="mx-auto h-14 max-w-6xl animate-pulse px-4 sm:px-6"
+        aria-hidden
+      />
     </div>
   )
 }

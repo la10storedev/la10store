@@ -1,6 +1,12 @@
 @import 'tailwindcss';
 
 /*
+  El modo oscuro se activa con la clase `.dark` (la elige el admin desde
+  Apariencia), no con la preferencia del sistema (`prefers-color-scheme`).
+*/
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
   Tema de la app (Tailwind CSS v4, configuracion desde CSS).
   Tailwind v4 no usa tailwind.config.ts: los tokens se declaran en `@theme`
   y generan utilities automaticamente (bg-brand-600, text-brand-700, etc.).
