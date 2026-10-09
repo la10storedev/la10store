@@ -61,6 +61,15 @@ async function main() {
     { key: 'hero_tagline', value: 'Tu camiseta, tu pasión' },
     { key: 'hero_cta_text', value: 'Ver catalogo' },
     { key: 'hero_cta_link', value: '#catalogo' },
+    { key: 'whatsapp_number', value: '5491123456789' },
+    { key: 'whatsapp_message', value: 'Hola! Quiero consultar por la camiseta "{productName}"\nTalle: {size}\nPrecio de referencia: {price}\nRef: {productId}\nEsta disponible?' },
+    { key: 'contact_numbers', value: '[]' },
+    { key: 'shipping_title', value: 'Envío y pagos' },
+    { key: 'shipping_items', value: '[]' },
+    { key: 'footer_description', value: 'Camisetas de fútbol de selecciones y clubes. Enviamos a todo el país y coordinamos la compra directa por WhatsApp.' },
+    { key: 'footer_email', value: 'holo@tumarca.com' },
+    { key: 'footer_instagram_url', value: 'https://instagram.com/tu-marca' },
+    { key: 'footer_copyright', value: '© {year} {name}. Catalogo informativo: no procesamos pagos online, la compra se coordina por WhatsApp.' },
   ]
 
   console.log('📝 Insertando valores iniciales...')
@@ -92,7 +101,16 @@ INSERT INTO site_settings (key, value) VALUES
   ('hero_subtitle', 'Elegi tu talle y consultanos por WhatsApp. Te confirmamos disponibilidad, medidas y forma de pago. Sin carrito, sin pagos online: hablamos directo.'),
   ('hero_tagline', 'Tu camiseta, tu pasión'),
   ('hero_cta_text', 'Ver catalogo'),
-  ('hero_cta_link', '#catalogo')
+  ('hero_cta_link', '#catalogo'),
+  ('whatsapp_number', '5491123456789'),
+  ('whatsapp_message', 'Hola! Quiero consultar por la camiseta "{productName}"\nTalle: {size}\nPrecio de referencia: {price}\nRef: {productId}\nEsta disponible?'),
+  ('contact_numbers', '[]'),
+  ('shipping_title', 'Envío y pagos'),
+  ('shipping_items', '[]'),
+  ('footer_description', 'Camisetas de fútbol de selecciones y clubes. Enviamos a todo el país y coordinamos la compra directa por WhatsApp.'),
+  ('footer_email', 'holo@tumarca.com'),
+  ('footer_instagram_url', 'https://instagram.com/tu-marca'),
+  ('footer_copyright', '© {year} {name}. Catalogo informativo: no procesamos pagos online, la compra se coordina por WhatsApp.')
 ON CONFLICT (key) DO NOTHING;
   `)
 }

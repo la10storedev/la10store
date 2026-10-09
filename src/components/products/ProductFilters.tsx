@@ -456,7 +456,7 @@ export function ProductFilters({ facets, filters }: ProductFiltersProps) {
               {activeFilterCount > 0 ? (
                 <span
                   aria-label={`${activeFilterCount} filtros activos`}
-                  className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1.5 text-[10px] font-bold leading-none text-zinc-900"
+                  className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1.5 text-[10px] font-bold leading-none text-zinc-900 dark:bg-zinc-100 dark:text-zinc-900"
                 >
                   {activeFilterCount}
                 </span>
@@ -529,7 +529,7 @@ export function ProductFilters({ facets, filters }: ProductFiltersProps) {
                 setQuery('')
                 router.replace(pathname, { scroll: false })
               }}
-              className="ml-1 text-xs font-bold uppercase tracking-[0.14em] text-zinc-700 underline underline-offset-4 transition-colors hover:text-zinc-950"
+              className="ml-1 text-xs font-bold uppercase tracking-[0.14em] text-zinc-700 underline underline-offset-4 transition-colors hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white"
             >
               Limpiar
             </button>
@@ -553,26 +553,26 @@ export function ProductFilters({ facets, filters }: ProductFiltersProps) {
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={descId}
-                className="flex w-full max-h-[92vh] flex-col bg-white shadow-2xl animate-sheet-in rounded-t-2xl sm:max-h-[85vh] sm:max-w-2xl sm:rounded-2xl sm:animate-confirm-in"
+                className="flex w-full max-h-[92vh] flex-col bg-white shadow-2xl animate-sheet-in rounded-t-2xl dark:border dark:border-zinc-800 dark:bg-zinc-900 sm:max-h-[85vh] sm:max-w-2xl sm:rounded-2xl sm:animate-confirm-in"
               >
                 {/* Indicador de "drag" en mobile (puramente visual, sin handler). */}
                 <div
                   aria-hidden
-                  className="mx-auto mt-2 h-1 w-10 rounded-full bg-zinc-200 sm:hidden"
+                  className="mx-auto mt-2 h-1 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700 sm:hidden"
                 />
 
                 {/* Cabecera */}
-                <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4 sm:px-6">
+                <div className="flex items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4 dark:border-zinc-800 sm:px-6">
                   <div>
                     <h2
                       id={titleId}
-                      className="text-sm font-bold uppercase tracking-[0.16em] text-zinc-950"
+                      className="text-sm font-bold uppercase tracking-[0.16em] text-zinc-950 dark:text-zinc-100"
                     >
                       Filtros y ordenar
                     </h2>
-                    <p id={descId} className="mt-1 text-xs leading-relaxed text-zinc-500">
+                    <p id={descId} className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
                       Ajusta las opciones y presiona{' '}
-                      <strong className="font-semibold text-zinc-700">Aplicar</strong> para
+                      <strong className="font-semibold text-zinc-700 dark:text-zinc-200">Aplicar</strong> para
                       actualizar los resultados.
                     </p>
                   </div>
@@ -580,7 +580,7 @@ export function ProductFilters({ facets, filters }: ProductFiltersProps) {
                     type="button"
                     onClick={closeModal}
                     aria-label="Cerrar filtros"
-                    className="-mr-2 inline-flex shrink-0 items-center justify-center p-2 text-zinc-400 transition-colors hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+                    className="-mr-2 inline-flex shrink-0 items-center justify-center p-2 text-zinc-400 transition-colors hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 dark:text-zinc-500 dark:hover:text-zinc-100"
                   >
                     <svg
                       viewBox="0 0 16 16"
@@ -684,12 +684,12 @@ export function ProductFilters({ facets, filters }: ProductFiltersProps) {
                 </div>
 
                 {/* Footer con acciones */}
-                <div className="flex flex-col-reverse gap-3 border-t border-zinc-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
+                <div className="flex flex-col-reverse gap-3 border-t border-zinc-200 px-5 py-4 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
                   <button
                     type="button"
                     onClick={resetDraft}
                     disabled={draftCount === 0}
-                    className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 transition-colors hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-zinc-500"
+                    className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500 transition-colors hover:text-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-100 dark:disabled:hover:text-zinc-400"
                   >
                     Limpiar todo
                   </button>
@@ -697,7 +697,7 @@ export function ProductFilters({ facets, filters }: ProductFiltersProps) {
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="inline-flex flex-1 items-center justify-center border border-zinc-300 bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-950 transition-colors duration-150 hover:border-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 sm:flex-none"
+                      className="inline-flex flex-1 items-center justify-center border border-zinc-300 bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-950 transition-colors duration-150 hover:border-zinc-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-100 sm:flex-none"
                     >
                       Cancelar
                     </button>
@@ -710,7 +710,7 @@ export function ProductFilters({ facets, filters }: ProductFiltersProps) {
                       {draftCount > 0 ? (
                         <span
                           aria-hidden
-                          className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1.5 text-[10px] font-bold leading-none text-brand-700"
+                          className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white px-1.5 text-[10px] font-bold leading-none text-brand-700 dark:bg-zinc-100 dark:text-zinc-900"
                         >
                           {draftCount}
                         </span>
@@ -757,14 +757,14 @@ function FilterSegmented({
     <div className={className}>
       <div
         id={groupId}
-        className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400"
+        className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500"
       >
         {label}
       </div>
       <div
         role="radiogroup"
         aria-labelledby={groupId}
-        className="flex w-full rounded-xl border border-zinc-200 bg-zinc-100 p-1"
+        className="flex w-full rounded-xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-700 dark:bg-zinc-800"
       >
         {options.map((option) => {
           const isSelected = option.value === value
@@ -779,8 +779,8 @@ function FilterSegmented({
                 'flex-1 rounded-lg px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors duration-150',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600',
                 isSelected
-                  ? 'bg-white text-brand-700 shadow-sm'
-                  : 'text-zinc-600 hover:text-zinc-950',
+                  ? 'bg-white text-brand-700 shadow-sm dark:bg-zinc-900 dark:text-brand-400'
+                  : 'text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-100',
               ].join(' ')}
             >
               {option.label}
@@ -829,7 +829,7 @@ function FilterSelect({
     <div className={['flex flex-col gap-1.5', className].filter(Boolean).join(' ')}>
       <label
         htmlFor={id}
-        className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400"
+        className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500"
       >
         {label}
       </label>
@@ -838,14 +838,16 @@ function FilterSelect({
           uno de los selects esta filtrado. `aria-live="polite"` anuncia el
           cambio cuando la cascada reduce la lista del otro select. */}
       <div className="min-h-3" aria-live="polite">
-        {hint ? <p className="text-[10px] text-zinc-500">{hint}</p> : null}
+        {hint ? (
+          <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{hint}</p>
+        ) : null}
       </div>
       <div className="relative">
         <select
           id={id}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-12 w-full appearance-none rounded-xl border border-zinc-300 bg-white px-4 pr-10 text-base font-medium text-zinc-900 transition focus:border-brand-600 focus:outline-2 focus:outline-offset-0 focus:outline-brand-600/40"
+          className="h-12 w-full appearance-none rounded-xl border border-zinc-300 bg-white px-4 pr-10 text-base font-medium text-zinc-900 transition focus:border-brand-600 focus:outline-2 focus:outline-offset-0 focus:outline-brand-600/40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-brand-400"
         >
           {options.map((option) => (
             <option key={option.value || `__all__${name}`} value={option.value}>
@@ -855,7 +857,7 @@ function FilterSelect({
         </select>
         <span
           aria-hidden
-          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400"
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500"
         >
           <svg
             viewBox="0 0 12 12"
@@ -881,7 +883,7 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
     <button
       type="button"
       onClick={onRemove}
-      className="inline-flex items-center gap-1.5 bg-brand-600 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-white transition-colors duration-150 hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+      className="inline-flex items-center gap-1.5 bg-brand-600 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-white transition-colors duration-150 hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 dark:bg-brand-500 dark:hover:bg-brand-400"
     >
       {label}
       <span aria-hidden>&times;</span>

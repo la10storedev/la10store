@@ -29,8 +29,8 @@ async function requireSession(): Promise<void> {
 }
 
 /**
- * Guarda todos los campos del hero. La firma con estado previo es la que
- * espera `useActionState` en el formulario.
+ * Guarda todos los campos del hero (imagen y textos). La firma con estado
+ * previo es la que espera `useActionState` en el formulario.
  */
 export async function saveHeroAction(
   _previous: FormState,
@@ -49,9 +49,9 @@ export async function saveHeroAction(
 }
 
 /**
- * Guarda el numero de WhatsApp de contacto en `site_settings`. Revalida las
- * rutas que arman links de WhatsApp (`/` y `/products/[id]`) para que la
- * tienda use el numero nuevo al instante.
+ * Guarda el numero y el mensaje predeterminado de WhatsApp de contacto en
+ * `site_settings`. Revalida las rutas que arman links de WhatsApp (`/` y
+ * `/products/[id]`) para que la tienda use los valores nuevos al instante.
  */
 export async function saveContactAction(
   _previous: FormState,
@@ -59,8 +59,31 @@ export async function saveContactAction(
 ): Promise<FormState> {
   await requireSession()
 
-  const whatsappNumber = String(formData.get('whatsapp_number') ?? '').trim()
-  await setSiteSetting('whatsapp_number', whatsappNumber)
+  const rawContacts = String(formData.get('contact_numbers') ?? '')
+  let parsedContacts: unknown = []
+  try {
+    parsedContacts = JSON.parse(rawContacts)
+  } catch {
+    parsedContacts = []
+  }
+
+  const rows = (Array.isArray(parsedContacts) ? parsedContacts : [])
+    .map((row) => {
+      const value = (row ?? {}) as { name?: unknown; number?: unknown }
+      return {
+        name: String(value.name ?? '').trim().slice(0, 40),
+        number: String(value.number ?? '').replace(/\D/g, ''),
+      }
+    })
+    .filter((row) => row.number !== '')
+
+  await setSiteSetting('contact_numbers', JSON.stringify(rows))
+
+  const primaryNumber = rows[0]?.number
+  if (primaryNumber) await setSiteSetting('whatsapp_number', primaryNumber)
+
+  const whatsappMessage = String(formData.get('whatsapp_message') ?? '')
+  await setSiteSetting('whatsapp_message', whatsappMessage)
 
   revalidatePath('/')
   revalidatePath('/products/[id]')

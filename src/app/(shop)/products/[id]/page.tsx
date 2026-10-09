@@ -7,7 +7,7 @@ import { ProductGrid } from '@/components/products/ProductGrid'
 import { StockBadge } from '@/components/ui/StockBadge'
 import { formatDate, formatPrice } from '@/lib/format'
 import { availableSizes, categoryLabels, totalStock } from '@/lib/products'
-import { getAllProducts, getProductById, getWhatsAppNumber } from '@/lib/products-store'
+import { getAllProducts, getContactNumbers, getProductById, getWhatsAppMessage, getWhatsAppNumber } from '@/lib/products-store'
 import { siteConfig } from '@/lib/site'
 
 /** Misma razon que en el catalogo: la DAL lee del disco. */
@@ -46,7 +46,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const related = await getRelated(product.id, product.category)
   const sizes = availableSizes(product)
-  const whatsappNumber = await getWhatsAppNumber()
+  const [whatsappNumber, whatsappMessage, contacts] = await Promise.all([
+    getWhatsAppNumber(),
+    getWhatsAppMessage(),
+    getContactNumbers(),
+  ])
 
   const images: GalleryImage[] = product.images.length
     ? product.images.map((src, index) => ({ src, alt: `${product.name} · foto ${index + 1}` }))
@@ -55,10 +59,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
       {/* Migas de pan */}
-      <nav aria-label="Migas de pan" className="mb-6 text-[11px] uppercase tracking-[0.1em] text-zinc-400">
+      <nav
+        aria-label="Migas de pan"
+        className="mb-6 text-[11px] uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500"
+      >
         <ol className="flex flex-wrap items-center gap-2">
           <li>
-            <Link href="/" className="transition-colors hover:text-zinc-950">
+            <Link
+              href="/"
+              className="transition-colors hover:text-zinc-950 dark:hover:text-white"
+            >
               Catalogo
             </Link>
           </li>
@@ -66,13 +76,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <li>
             <Link
               href={`/?team=${encodeURIComponent(product.team)}`}
-              className="transition-colors hover:text-zinc-950"
+              className="transition-colors hover:text-zinc-950 dark:hover:text-white"
             >
               {product.team}
             </Link>
           </li>
           <li aria-hidden>/</li>
-          <li className="max-w-[70vw] truncate text-zinc-950" aria-current="page">
+          <li
+            className="max-w-[70vw] truncate text-zinc-950 dark:text-zinc-100"
+            aria-current="page"
+          >
             {product.name}
           </li>
         </ol>
@@ -94,59 +107,84 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {/* ---------------------------- Informacion ----------------------- */}
         <div className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
           <header className="flex flex-col gap-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
               {categoryLabels[product.category]} · {product.league} · {product.season}
             </p>
 
-            <h1 className="text-2xl font-black uppercase leading-[1.05] tracking-tight text-zinc-950 sm:text-3xl">
+            <h1 className="text-2xl font-black uppercase leading-[1.05] tracking-tight text-zinc-950 dark:text-zinc-100 sm:text-3xl">
               {product.name}
             </h1>
 
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-2xl font-bold text-zinc-950">{formatPrice(product.price)}</p>
+              <p className="text-2xl font-bold text-zinc-950 dark:text-zinc-100">
+                {formatPrice(product.price)}
+              </p>
               <StockBadge product={product} />
             </div>
-            <p className="text-xs text-zinc-500">Precio de referencia. Confirmamos por WhatsApp.</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Precio de referencia. Confirmamos por WhatsApp.
+            </p>
           </header>
 
-          <hr className="border-zinc-200" />
+          <hr className="border-zinc-200 dark:border-zinc-800" />
 
           {/* Selector de talle + CTA de WhatsApp */}
-          <ProductContactPanel product={product} whatsappNumber={whatsappNumber} />
+          <ProductContactPanel
+            product={product}
+            whatsappNumber={whatsappNumber}
+            whatsappMessage={whatsappMessage}
+            contacts={contacts}
+          />
 
-          <hr className="border-zinc-200" />
+          <hr className="border-zinc-200 dark:border-zinc-800" />
 
           {/* Descripcion: colapsable, se abre con "Ficha tecnica" */}
-          <details className="border-t border-zinc-200 pt-4">
-            <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wide text-zinc-950">
+          <details className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
+            <summary className="cursor-pointer text-sm font-semibold uppercase tracking-wide text-zinc-950 dark:text-zinc-100">
               Ficha técnica
             </summary>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-600">{product.description}</p>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
+              {product.description}
+            </p>
           </details>
 
           {/* Ficha tecnica */}
-          <section className="flex flex-col gap-3 border-t border-zinc-200 pt-4">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-950">
+          <section className="flex flex-col gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-950 dark:text-zinc-100">
               Disponibilidad
             </h2>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
               <div>
-                <dt className="text-[11px] uppercase tracking-[0.1em] text-zinc-400">Talles</dt>
-                <dd className="mt-0.5 font-medium text-zinc-950">
+                <dt className="text-[11px] uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500">
+                  Talles
+                </dt>
+                <dd className="mt-0.5 font-medium text-zinc-950 dark:text-zinc-100">
                   {sizes.length > 0 ? sizes.map((size) => size.size).join(' · ') : 'Sin stock'}
                 </dd>
               </div>
               <div>
-                <dt className="text-[11px] uppercase tracking-[0.1em] text-zinc-400">Unidades</dt>
-                <dd className="mt-0.5 font-medium text-zinc-950">{totalStock(product)}</dd>
+                <dt className="text-[11px] uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500">
+                  Unidades
+                </dt>
+                <dd className="mt-0.5 font-medium text-zinc-950 dark:text-zinc-100">
+                  {totalStock(product)}
+                </dd>
               </div>
               <div>
-                <dt className="text-[11px] uppercase tracking-[0.1em] text-zinc-400">Alta</dt>
-                <dd className="mt-0.5 font-medium text-zinc-950">{formatDate(product.createdAt)}</dd>
+                <dt className="text-[11px] uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500">
+                  Alta
+                </dt>
+                <dd className="mt-0.5 font-medium text-zinc-950 dark:text-zinc-100">
+                  {formatDate(product.createdAt)}
+                </dd>
               </div>
               <div>
-                <dt className="text-[11px] uppercase tracking-[0.1em] text-zinc-400">Referencia</dt>
-                <dd className="mt-0.5 font-mono text-xs text-zinc-600">{product.id}</dd>
+                <dt className="text-[11px] uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500">
+                  Referencia
+                </dt>
+                <dd className="mt-0.5 font-mono text-xs text-zinc-600 dark:text-zinc-300">
+                  {product.id}
+                </dd>
               </div>
             </dl>
           </section>
@@ -155,14 +193,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
       {/* Relacionadas */}
       {related.length > 0 ? (
-        <section className="mt-20 border-t border-zinc-200 pt-10">
+        <section className="mt-20 border-t border-zinc-200 pt-10 dark:border-zinc-800">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-xl font-black uppercase tracking-tight text-zinc-950">
+            <h2 className="text-xl font-black uppercase tracking-tight text-zinc-950 dark:text-zinc-100">
               Tambien te puede interesar
             </h2>
             <Link
               href="/"
-              className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 underline-offset-4 transition-colors hover:text-zinc-950 hover:underline"
+              className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 underline-offset-4 transition-colors hover:text-zinc-950 hover:underline dark:text-zinc-400 dark:hover:text-white"
             >
               Ver todo
             </Link>

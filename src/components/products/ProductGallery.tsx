@@ -21,7 +21,8 @@ type ProductGalleryProps = {
  * - Desktop: imagen grande + columna de miniaturas a la izquierda.
  *
  * Es un Client Component porque la imagen visible depende del indice elegido.
- * Estetica: sin esquinas redondeadas; la imagen ocupa el ancho disponible.
+ * Estetica: las superficies (fondo, borde de la miniatura activa) siguen
+ * variantes `dark:` para integrarse al wrapper oscuro.
  */
 export function ProductGallery({ images, colors, initials }: ProductGalleryProps) {
   const [index, setIndex] = useState(0)
@@ -30,8 +31,8 @@ export function ProductGallery({ images, colors, initials }: ProductGalleryProps
 
   if (!active) {
     return (
-      <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-100">
-        <ProductImage alt="Camiseta" colors={colors} initials={initials} className="size-full object-cover" />
+      <div className="aspect-[4/5] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900">
+        <ProductImage alt="Producto" colors={colors} initials={initials} className="size-full object-cover" />
       </div>
     )
   }
@@ -51,8 +52,10 @@ export function ProductGallery({ images, colors, initials }: ProductGalleryProps
                   aria-current={selected}
                   aria-label={`Ver imagen ${imageIndex + 1}`}
                   className={[
-                    'block size-20 overflow-hidden border bg-zinc-100 transition-colors',
-                    selected ? 'border-zinc-950' : 'border-transparent hover:border-zinc-300',
+                    'block size-20 overflow-hidden border bg-zinc-100 transition-colors dark:bg-zinc-900',
+                    selected
+                      ? 'border-zinc-950 ring-2 ring-zinc-950 dark:border-zinc-100 dark:ring-zinc-100'
+                      : 'border-transparent hover:border-zinc-300 dark:hover:border-zinc-700',
                   ].join(' ')}
                 >
                   <ProductImage
@@ -70,7 +73,7 @@ export function ProductGallery({ images, colors, initials }: ProductGalleryProps
       ) : null}
 
       {/* Imagen principal */}
-      <div className="relative aspect-[4/5] flex-1 overflow-hidden bg-zinc-100">
+      <div className="relative aspect-[4/5] flex-1 overflow-hidden bg-zinc-100 dark:bg-zinc-900">
         <ProductImage
           src={active.src}
           alt={active.alt}
@@ -82,7 +85,7 @@ export function ProductGallery({ images, colors, initials }: ProductGalleryProps
         />
 
         {images.length > 1 ? (
-          <p className="absolute bottom-3 right-3 bg-white/90 px-2 py-1 text-[11px] font-medium tracking-wide text-zinc-900">
+          <p className="absolute bottom-3 right-3 bg-white/90 px-2 py-1 text-[11px] font-medium tracking-wide text-zinc-900 dark:bg-zinc-900/90 dark:text-zinc-100">
             {safeIndex + 1} / {images.length}
           </p>
         ) : null}
